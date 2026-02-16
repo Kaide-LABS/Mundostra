@@ -1,0 +1,29 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.6
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.14.1
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - pydantic>=2.10.0
+          - pydantic-settings>=2.7.0
+        args: [--ignore-missing-imports]
+  - repo: local
+    hooks:
+      - id: frontend-lint
+        name: Frontend ESLint
+        entry: bash -c 'cd frontend && npx next lint'
+        language: system
+        files: '^frontend/src/.*\.(ts|tsx)$'
+        pass_filenames: false
+      - id: frontend-format
+        name: Frontend Prettier
+        entry: bash -c 'cd frontend && npx prettier --check src/'
+        language: system
+        files: '^frontend/src/.*\.(ts|tsx)$'
+        pass_filenames: false

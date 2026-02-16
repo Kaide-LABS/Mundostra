@@ -1,0 +1,58 @@
+[project]
+name = "mundostra-demo"
+version = "0.1.0"
+description = "Multi-Agent Travel OS Support System — Mundostra Pitch Demo"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.7.0",
+    "boto3>=1.35.0",
+    "google-cloud-aiplatform>=1.78.0",
+    "openai>=1.60.0",
+    "httpx>=0.28.0",
+    "structlog>=24.4.0",
+    "python-dotenv>=1.0.0",
+    "slack-bolt[async]>=1.20.0",
+    "slack-sdk>=3.33.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.25.0",
+    "httpx>=0.28.0",
+    "ruff>=0.9.0",
+    "mypy>=1.14.0",
+    "pre-commit>=4.0.0",
+    "boto3-stubs[bedrock-runtime]>=1.35.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["backend"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "SIM"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["backend/tests"]
+pythonpath = ["."]
