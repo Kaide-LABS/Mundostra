@@ -52,12 +52,11 @@ class PolicyResult(BaseModel):
 
 
 class CommsResult(BaseModel):
-    channel: str = "slack"
+    channel: str = "teams"
     text: str = ""
     tone_score: str = "empathetic-professional"
     urgency_flag: str = "high"
-    slack_ts: str | None = None
-    slack_channel: str | None = None
+    teams_sent: bool = False
 
 
 class Resolution(BaseModel):

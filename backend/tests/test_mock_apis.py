@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import date, datetime, timedelta
+
 import pytest
 from httpx import AsyncClient
 
@@ -42,9 +44,11 @@ class TestFlightsMockAPI:
 class TestCalendarMockAPI:
     @pytest.mark.asyncio
     async def test_no_conflict_for_evening_arrival(self, client: AsyncClient) -> None:
+        today = date.today()
+        arrival = datetime(today.year, today.month, today.day, 23, 45, 0)
         resp = await client.get(
             "/mock/calendar/check",
-            params={"arrival_time": "2025-02-12T23:45:00"},
+            params={"arrival_time": arrival.isoformat()},
         )
         assert resp.status_code == 200
         data = resp.json()
@@ -52,9 +56,11 @@ class TestCalendarMockAPI:
 
     @pytest.mark.asyncio
     async def test_conflict_for_late_arrival(self, client: AsyncClient) -> None:
+        tomorrow = date.today() + timedelta(days=1)
+        arrival = datetime(tomorrow.year, tomorrow.month, tomorrow.day, 9, 0, 0)
         resp = await client.get(
             "/mock/calendar/check",
-            params={"arrival_time": "2025-02-13T09:00:00"},
+            params={"arrival_time": arrival.isoformat()},
         )
         data = resp.json()
         assert data["has_conflict"] is True

@@ -53,7 +53,7 @@ class TestEventModels:
             email="sarah@test.com",
             role="VP Engineering",
             policy_tier=PolicyTier.EXECUTIVE,
-            slack_id="U123",
+            messaging_id="U123",
         )
         assert traveler.timezone == "America/Los_Angeles"
         assert traveler.calendar_integration is True
@@ -68,7 +68,7 @@ class TestEventModels:
                 email="test@test.com",
                 role="IC",
                 policy_tier=PolicyTier.STANDARD,
-                slack_id="U999",
+                messaging_id="U999",
             ),
         )
         data = event.model_dump(mode="json")
@@ -85,7 +85,7 @@ class TestEventModels:
                 email="a@a.com",
                 role="A",
                 policy_tier=PolicyTier.STANDARD,
-                slack_id="A",
+                messaging_id="A",
             ),
         )
         e2 = TravelEvent(
@@ -96,7 +96,7 @@ class TestEventModels:
                 email="b@b.com",
                 role="B",
                 policy_tier=PolicyTier.STANDARD,
-                slack_id="B",
+                messaging_id="B",
             ),
         )
         assert e1.id != e2.id

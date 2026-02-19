@@ -47,29 +47,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     if engine is None:
         _init_engine()
 
-    # Mount Slack Bolt if enabled
-    if settings.slack_enabled and settings.slack_signing_secret:
-        from slack_bolt.adapter.fastapi.async_handler import AsyncSlackRequestHandler
-
-        from backend.slack.app import create_slack_app
-
-        slack_app = create_slack_app(
-            signing_secret=settings.slack_signing_secret,
-            bot_token=settings.slack_bot_token,
-            engine_getter=lambda: engine,
-        )
-        slack_handler = AsyncSlackRequestHandler(slack_app)
-
-        @app.post("/slack/interactions")
-        async def slack_interactions(req: Request) -> Response:
-            return await slack_handler.handle(req)
-
-        @app.post("/slack/events")
-        async def slack_events(req: Request) -> Response:
-            return await slack_handler.handle(req)
-
-        await logger.ainfo("slack_mounted", channel=settings.slack_default_channel)
-
     await logger.ainfo(
         "startup",
         env=settings.app_env,
@@ -135,8 +112,6 @@ async def reset_demo() -> dict[str, str]:
     """Reset all state for a fresh demo run."""
     engine.resolutions.clear()
     bus._history.clear()
-    if engine.slack_sender:
-        engine.slack_sender.clear_mappings()
     return {"status": "reset"}
 
 

@@ -136,7 +136,7 @@ class TestCommsAgent:
         )
 
         result = agent._get_mock_response(task)
-        assert result["channel"] == "slack"
+        assert result["channel"] == "teams"
         assert "Sarah Chen" in result["text"]
         assert result["tone_score"] == "empathetic-professional"
         assert task.tokens_used == 892

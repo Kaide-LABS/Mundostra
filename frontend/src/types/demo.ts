@@ -9,7 +9,11 @@ export const DEMO_EVENT: TravelEvent = {
     number: 'UA 2381',
     origin: 'SFO',
     destination: 'JFK',
-    scheduled_departure: '2025-02-12T14:30:00+00:00',
+    scheduled_departure: (() => {
+      const d = new Date();
+      d.setHours(14, 30, 0, 0);
+      return d.toISOString();
+    })(),
     status: 'cancelled',
     reason: 'Mechanical issue — aircraft grounded',
     original_price: 400.0,
@@ -20,7 +24,7 @@ export const DEMO_EVENT: TravelEvent = {
     email: 'sarah@designpartner.com',
     role: 'VP Engineering',
     policy_tier: 'executive',
-    slack_id: '@sarah.chen',
+    messaging_id: '@sarah.chen',
     timezone: 'America/Los_Angeles',
     calendar_integration: true,
     preferences: {

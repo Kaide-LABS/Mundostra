@@ -2,26 +2,30 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from fastapi import APIRouter, Query
 
 router = APIRouter(prefix="/mock/flights", tags=["mock"])
 
-# Base time: 2 hours from "now" for the demo scenario
-_BASE_DEPARTURE = datetime(2025, 2, 12, 18, 30, 0)
+
+def _get_base_departure() -> datetime:
+    """Today at 18:30 — keeps the demo feeling live."""
+    today = date.today()
+    return datetime(today.year, today.month, today.day, 18, 30, 0)
 
 
 def _build_alternatives(origin: str, destination: str) -> list[dict[str, object]]:
     """7 deterministic flight alternatives: varying airlines, prices, one red-eye, one over-budget."""
+    base = _get_base_departure()
     return [
         {
             "flight": "UA105",
             "airline": "United Airlines",
             "origin": origin,
             "destination": destination,
-            "departure": _BASE_DEPARTURE.isoformat(),
-            "arrival": (_BASE_DEPARTURE + timedelta(hours=5, minutes=15)).isoformat(),
+            "departure": base.isoformat(),
+            "arrival": (base + timedelta(hours=5, minutes=15)).isoformat(),
             "price": 420.0,
             "seat_available": True,
             "cabin": "economy",
@@ -31,8 +35,8 @@ def _build_alternatives(origin: str, destination: str) -> list[dict[str, object]
             "airline": "American Airlines",
             "origin": origin,
             "destination": destination,
-            "departure": (_BASE_DEPARTURE + timedelta(minutes=45)).isoformat(),
-            "arrival": (_BASE_DEPARTURE + timedelta(hours=6)).isoformat(),
+            "departure": (base + timedelta(minutes=45)).isoformat(),
+            "arrival": (base + timedelta(hours=6)).isoformat(),
             "price": 385.0,
             "seat_available": True,
             "cabin": "economy",
@@ -42,8 +46,8 @@ def _build_alternatives(origin: str, destination: str) -> list[dict[str, object]
             "airline": "Delta Air Lines",
             "origin": origin,
             "destination": destination,
-            "departure": (_BASE_DEPARTURE + timedelta(hours=1, minutes=30)).isoformat(),
-            "arrival": (_BASE_DEPARTURE + timedelta(hours=6, minutes=45)).isoformat(),
+            "departure": (base + timedelta(hours=1, minutes=30)).isoformat(),
+            "arrival": (base + timedelta(hours=6, minutes=45)).isoformat(),
             "price": 450.0,
             "seat_available": True,
             "cabin": "economy",
@@ -53,8 +57,8 @@ def _build_alternatives(origin: str, destination: str) -> list[dict[str, object]
             "airline": "JetBlue",
             "origin": origin,
             "destination": destination,
-            "departure": (_BASE_DEPARTURE + timedelta(hours=2)).isoformat(),
-            "arrival": (_BASE_DEPARTURE + timedelta(hours=7, minutes=20)).isoformat(),
+            "departure": (base + timedelta(hours=2)).isoformat(),
+            "arrival": (base + timedelta(hours=7, minutes=20)).isoformat(),
             "price": 340.0,
             "seat_available": True,
             "cabin": "economy",
@@ -64,8 +68,8 @@ def _build_alternatives(origin: str, destination: str) -> list[dict[str, object]
             "airline": "United Airlines",
             "origin": origin,
             "destination": destination,
-            "departure": (_BASE_DEPARTURE + timedelta(hours=4, minutes=30)).isoformat(),
-            "arrival": (_BASE_DEPARTURE + timedelta(hours=9, minutes=30)).isoformat(),
+            "departure": (base + timedelta(hours=4, minutes=30)).isoformat(),
+            "arrival": (base + timedelta(hours=9, minutes=30)).isoformat(),
             "price": 310.0,
             "seat_available": True,
             "cabin": "economy",
@@ -76,8 +80,8 @@ def _build_alternatives(origin: str, destination: str) -> list[dict[str, object]
             "airline": "American Airlines",
             "origin": origin,
             "destination": destination,
-            "departure": (_BASE_DEPARTURE + timedelta(minutes=20)).isoformat(),
-            "arrival": (_BASE_DEPARTURE + timedelta(hours=5, minutes=35)).isoformat(),
+            "departure": (base + timedelta(minutes=20)).isoformat(),
+            "arrival": (base + timedelta(hours=5, minutes=35)).isoformat(),
             "price": 680.0,
             "seat_available": True,
             "cabin": "business",
@@ -88,8 +92,8 @@ def _build_alternatives(origin: str, destination: str) -> list[dict[str, object]
             "airline": "Delta Air Lines",
             "origin": origin,
             "destination": destination,
-            "departure": (_BASE_DEPARTURE + timedelta(hours=3)).isoformat(),
-            "arrival": (_BASE_DEPARTURE + timedelta(hours=8, minutes=15)).isoformat(),
+            "departure": (base + timedelta(hours=3)).isoformat(),
+            "arrival": (base + timedelta(hours=8, minutes=15)).isoformat(),
             "price": 395.0,
             "seat_available": False,
             "cabin": "economy",
@@ -101,13 +105,14 @@ def _build_alternatives(origin: str, destination: str) -> list[dict[str, object]
 async def search_flights(
     origin: str = Query(default="SFO"),
     destination: str = Query(default="JFK"),
-    date: str = Query(default="2025-02-12"),
+    search_date: str = Query(default="", alias="date"),
 ) -> dict[str, object]:
+    effective_date = search_date or date.today().isoformat()
     alternatives = _build_alternatives(origin, destination)
     return {
         "origin": origin,
         "destination": destination,
-        "date": date,
+        "date": effective_date,
         "results_count": len(alternatives),
         "alternatives": alternatives,
     }

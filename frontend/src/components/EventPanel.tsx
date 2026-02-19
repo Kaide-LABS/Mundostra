@@ -2,13 +2,13 @@
 
 import { useDashboard } from '@/context/DashboardContext';
 import { Card } from '@/components/ui/Card';
-import { SlackPreview } from '@/components/SlackPreview';
+import { TeamsPreview } from '@/components/TeamsPreview';
 
 const STATUS_BADGES: Record<string, { bg: string; text: string; label: string }> = {
-  proposed: { bg: 'bg-blue-500/20', text: 'text-blue-400', label: 'PROPOSED' },
-  confirmed: { bg: 'bg-green-500/20', text: 'text-green-400', label: 'BOOKED' },
-  rejected: { bg: 'bg-red-500/20', text: 'text-red-400', label: 'REJECTED' },
-  escalated: { bg: 'bg-amber-500/20', text: 'text-amber-400', label: 'ESCALATED TO HUMAN' },
+  proposed: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'PROPOSED' },
+  confirmed: { bg: 'bg-green-100', text: 'text-green-700', label: 'BOOKED' },
+  rejected: { bg: 'bg-red-100', text: 'text-red-700', label: 'REJECTED' },
+  escalated: { bg: 'bg-amber-100', text: 'text-amber-700', label: 'ESCALATED TO HUMAN' },
 };
 
 export function EventPanel() {
@@ -20,13 +20,13 @@ export function EventPanel() {
 
   return (
     <div className="flex h-full w-full flex-col gap-3 overflow-y-auto">
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+      <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
         Disruption Event
       </h2>
 
       {!event ? (
         <Card className="flex flex-1 items-center justify-center">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-400">
             No active event. Click &ldquo;Trigger Demo Event&rdquo; to start.
           </p>
         </Card>
@@ -34,7 +34,7 @@ export function EventPanel() {
         <>
           <Card>
             <div className="mb-2 flex items-center gap-2">
-              <span className="rounded bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400">
+              <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
                 {event.event_type.replace('_', ' ').toUpperCase()}
               </span>
               <span className="font-mono text-xs text-gray-500">{event.booking_ref}</span>
@@ -43,78 +43,78 @@ export function EventPanel() {
             {event.flight && (
               <div className="space-y-1.5 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Flight</span>
-                  <span className="font-mono font-medium">{event.flight.number}</span>
+                  <span className="text-gray-500">Flight</span>
+                  <span className="font-mono font-medium text-gray-900">{event.flight.number}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Route</span>
-                  <span className="font-medium">
+                  <span className="text-gray-500">Route</span>
+                  <span className="font-medium text-gray-900">
                     {event.flight.origin} → {event.flight.destination}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Departure</span>
-                  <span className="font-mono text-xs">
+                  <span className="text-gray-500">Departure</span>
+                  <span className="font-mono text-xs text-gray-700">
                     {new Date(event.flight.scheduled_departure).toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Status</span>
-                  <span className="font-medium text-red-400">{event.flight.status}</span>
+                  <span className="text-gray-500">Status</span>
+                  <span className="font-medium text-red-600">{event.flight.status}</span>
                 </div>
                 {event.flight.reason && (
                   <p className="mt-1 text-xs text-gray-500">{event.flight.reason}</p>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Original Price</span>
-                  <span className="font-mono">${event.flight.original_price.toFixed(2)}</span>
+                  <span className="text-gray-500">Original Price</span>
+                  <span className="font-mono text-gray-900">${event.flight.original_price.toFixed(2)}</span>
                 </div>
               </div>
             )}
           </Card>
 
           <Card>
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
               Traveler
             </h3>
             <div className="space-y-1.5 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-400">Name</span>
-                <span className="font-medium">{event.traveler.name}</span>
+                <span className="text-gray-500">Name</span>
+                <span className="font-medium text-gray-900">{event.traveler.name}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Role</span>
-                <span>{event.traveler.role}</span>
+                <span className="text-gray-500">Role</span>
+                <span className="text-gray-700">{event.traveler.role}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Policy Tier</span>
-                <span className="rounded bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-400">
+                <span className="text-gray-500">Policy Tier</span>
+                <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
                   {event.traveler.policy_tier}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Email</span>
-                <span className="font-mono text-xs">{event.traveler.email}</span>
+                <span className="text-gray-500">Email</span>
+                <span className="font-mono text-xs text-gray-700">{event.traveler.email}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Slack</span>
-                <span className="font-mono text-xs">{event.traveler.slack_id}</span>
+                <span className="text-gray-500">Teams</span>
+                <span className="font-mono text-xs text-gray-700">{event.traveler.messaging_id}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Calendar</span>
-                <span>{event.traveler.calendar_integration ? 'Linked' : 'Not linked'}</span>
+                <span className="text-gray-500">Calendar</span>
+                <span className="text-gray-700">{event.traveler.calendar_integration ? 'Linked' : 'Not linked'}</span>
               </div>
             </div>
           </Card>
 
           {resolution && (
             <Card>
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
                 Resolution
               </h3>
               <div className="space-y-1.5 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Status</span>
+                  <span className="text-gray-500">Status</span>
                   {badge && (
                     <span
                       className={`rounded ${badge.bg} px-2 py-0.5 text-xs font-medium ${badge.text}`}
@@ -126,22 +126,22 @@ export function EventPanel() {
                 {resolution.chosen_option && (
                   <>
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Rebooked</span>
-                      <span className="font-mono font-medium">
+                      <span className="text-gray-500">Rebooked</span>
+                      <span className="font-mono font-medium text-gray-900">
                         {resolution.chosen_option.flight}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400">New Price</span>
-                      <span className="font-mono">
+                      <span className="text-gray-500">New Price</span>
+                      <span className="font-mono text-gray-900">
                         ${resolution.chosen_option.price.toFixed(2)}
                       </span>
                     </div>
                   </>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Agents</span>
-                  <span>{resolution.agents_involved.length}</span>
+                  <span className="text-gray-500">Agents</span>
+                  <span className="text-gray-700">{resolution.agents_involved.length}</span>
                 </div>
 
                 {/* Response buttons — only when proposed */}
@@ -157,7 +157,7 @@ export function EventPanel() {
                     <button
                       onClick={() => respondToEvent('options')}
                       disabled={state.isResponding}
-                      className="min-h-[44px] flex-1 rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-bg-hover disabled:opacity-50"
+                      className="min-h-[44px] flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
                     >
                       See Options
                     </button>
@@ -166,7 +166,7 @@ export function EventPanel() {
 
                 {/* Escalation message */}
                 {resolution.status === 'escalated' && (
-                  <div className="mt-2 rounded-lg bg-amber-500/10 p-2.5 text-xs text-amber-400">
+                  <div className="mt-2 rounded-lg bg-amber-50 p-2.5 text-xs text-amber-700">
                     This resolution could not be handled automatically and has been escalated to a
                     human travel agent for review.
                   </div>
@@ -175,11 +175,11 @@ export function EventPanel() {
             </Card>
           )}
 
-          {/* Slack Preview — show comms message */}
+          {/* Teams Preview — show comms message */}
           {resolution?.comms_result && (
-            <SlackPreview
+            <TeamsPreview
               text={resolution.comms_result.text}
-              slackTs={resolution.comms_result.slack_ts}
+              teamsSent={resolution.comms_result.teams_sent}
             />
           )}
         </>

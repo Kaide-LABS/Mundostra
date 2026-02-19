@@ -39,7 +39,7 @@ class TravelerProfile(BaseModel):
     email: str
     role: str
     policy_tier: PolicyTier
-    slack_id: str
+    messaging_id: str
     timezone: str = "America/Los_Angeles"
     calendar_integration: bool = True
     preferences: dict[str, Any] = Field(default_factory=dict)

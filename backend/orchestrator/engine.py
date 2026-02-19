@@ -40,7 +40,7 @@ from backend.orchestrator.prompts import (
     ORCHESTRATOR_SYNTHESIS_PROMPT,
     ORCHESTRATOR_SYSTEM_PROMPT,
 )
-from backend.slack.sender import SlackSender
+from backend.teams.sender import TeamsSender
 
 logger = get_logger(__name__)
 
@@ -64,12 +64,11 @@ class OrchestratorEngine:
         self.settings = get_settings()
         self.resolutions: dict[UUID, Resolution] = {}
 
-        # Conditionally create Slack sender
-        self.slack_sender: SlackSender | None = None
-        if self.settings.slack_enabled and self.settings.slack_bot_token:
-            self.slack_sender = SlackSender(
-                bot_token=self.settings.slack_bot_token,
-                default_channel=self.settings.slack_default_channel,
+        # Conditionally create Teams sender
+        self.teams_sender: TeamsSender | None = None
+        if self.settings.teams_enabled and self.settings.teams_webhook_url:
+            self.teams_sender = TeamsSender(
+                webhook_url=self.settings.teams_webhook_url,
             )
 
         agent_kwargs: dict[str, Any] = {
@@ -80,7 +79,7 @@ class OrchestratorEngine:
         }
         self.research_agent = ResearchAgent(**agent_kwargs)
         self.policy_agent = PolicyAgent(**agent_kwargs)
-        self.comms_agent = CommsAgent(slack_sender=self.slack_sender, **agent_kwargs)
+        self.comms_agent = CommsAgent(teams_sender=self.teams_sender, **agent_kwargs)
 
     async def handle_event(self, event: TravelEvent) -> Resolution:
         start = time.monotonic()
@@ -246,7 +245,7 @@ class OrchestratorEngine:
                     {
                         "agent": "research",
                         "objective": "Find alternative flights and check calendar",
-                        "input_summary": f"Route {event.flight.origin}→{event.flight.destination}"
+                        "input_summary": f"Route {event.flight.origin}\u2192{event.flight.destination}"
                         if event.flight
                         else "Unknown route",
                     },
@@ -433,10 +432,10 @@ class OrchestratorEngine:
     ) -> Resolution | None:
         """Handle a traveler response (confirm / options / reject).
 
-        Called from both the REST endpoint and Slack interaction handlers.
+        Called from the REST endpoint.
         """
         from backend.models.responses import TravelerResponseType
-        from backend.slack.blocks import build_confirmation_update, build_options_update
+        from backend.teams.cards import build_confirmation_card, build_options_card
 
         event_id = UUID(event_id_str)
         resolution = self.resolutions.get(event_id)
@@ -484,21 +483,20 @@ class OrchestratorEngine:
                 f"Booking confirmed — {resolution.chosen_option.flight if resolution.chosen_option else 'N/A'}",
             )
 
-            # Update Slack message if sender exists
-            if self.slack_sender and resolution.chosen_option:
+            # Send confirmation card to Teams if sender exists
+            if self.teams_sender and resolution.chosen_option:
                 try:
                     traveler_name = ""
                     if resolution.comms_result:
                         traveler_name = "Traveler"
-                    blocks = build_confirmation_update(
+                    card = build_confirmation_card(
                         traveler_name=traveler_name,
                         chosen_flight=resolution.chosen_option.flight,
                         departure=str(resolution.chosen_option.departure),
                     )
-                    await self.slack_sender.update_message(
+                    await self.teams_sender.send_resolution(
                         event_id=event_id_str,
-                        blocks=blocks,
-                        text="Booking confirmed",
+                        card=card,
                     )
                 except Exception:
                     pass  # Non-critical — dashboard still reflects confirmation
@@ -518,17 +516,16 @@ class OrchestratorEngine:
                 data={"alternatives": alternatives_data},
             )
 
-            # Update Slack message to show options
-            if self.slack_sender:
+            # Send options card to Teams
+            if self.teams_sender:
                 try:
-                    blocks = build_options_update(
+                    card = build_options_card(
                         traveler_name="Traveler",
                         alternatives=alternatives_data,
                     )
-                    await self.slack_sender.update_message(
+                    await self.teams_sender.send_resolution(
                         event_id=event_id_str,
-                        blocks=blocks,
-                        text="Available alternatives",
+                        card=card,
                     )
                 except Exception:
                     pass

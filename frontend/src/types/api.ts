@@ -32,7 +32,7 @@ export interface TravelerProfile {
   email: string;
   role: string;
   policy_tier: PolicyTier;
-  slack_id: string;
+  messaging_id: string;
   timezone: string;
   calendar_integration: boolean;
   preferences: Record<string, unknown>;
@@ -87,8 +87,7 @@ export interface CommsResult {
   text: string;
   tone_score: string;
   urgency_flag: string;
-  slack_ts?: string | null;
-  slack_channel?: string | null;
+  teams_sent?: boolean;
 }
 
 export interface Resolution {

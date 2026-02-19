@@ -20,23 +20,21 @@ class Settings(BaseSettings):
     aws_secret_access_key: str = ""
 
     # Bedrock model IDs
-    orchestrator_model_id: str = "us.anthropic.claude-opus-4-0-20250514"
-    policy_model_id: str = "us.anthropic.claude-haiku-4-0-20250514"
+    orchestrator_model_id: str = "us.anthropic.claude-sonnet-4-20250514-v1:0"
+    policy_model_id: str = "us.anthropic.claude-3-5-haiku-20241022-v1:0"
 
     # Google Vertex AI
     gcp_project_id: str = ""
     gcp_location: str = "us-central1"
-    research_model_id: str = "gemini-2.0-flash"
+    research_model_id: str = "gemini-3-flash-preview"
 
     # OpenAI
     openai_api_key: str = ""
     comms_model_id: str = "gpt-4o"
 
-    # Slack
-    slack_bot_token: str = ""
-    slack_signing_secret: str = ""
-    slack_enabled: bool = False
-    slack_default_channel: str = ""
+    # Microsoft Teams
+    teams_enabled: bool = False
+    teams_webhook_url: str = ""
 
     # Server
     host: str = "0.0.0.0"
@@ -46,7 +44,7 @@ class Settings(BaseSettings):
     confidence_threshold: float = 0.7
 
     # Internal base URL for mock API calls
-    base_url: str = "http://localhost:8000"
+    base_url: str = "http://127.0.0.1:8000"
 
 
 @lru_cache

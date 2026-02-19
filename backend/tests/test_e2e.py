@@ -46,7 +46,7 @@ class TestEndToEnd:
 
         # 5. Verify comms result exists
         assert resolution["comms_result"] is not None
-        assert resolution["comms_result"]["channel"] == "slack"
+        assert resolution["comms_result"]["channel"] == "teams"
         assert len(resolution["comms_result"]["text"]) > 0
 
         # 6. Verify research result
