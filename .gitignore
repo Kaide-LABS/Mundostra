@@ -15,6 +15,11 @@ env/
 # Environment files
 .env
 
+# Credential files
+*.csv
+service-account.json
+*_accessKeys*
+
 # IDE
 .vscode/
 .idea/
