@@ -137,6 +137,41 @@ Three demo-enhancing changes:
 - Configure Gmail App Password and add to `.env`
 - Phase 4: pitch collateral (memo, API docs, cost analysis, Cloud Run deploy)
 
+## Session Handoff — 2026-02-20 (Session 5)
+
+### What was done
+1. **Cloud Run Deployment Config**: Created `Dockerfile.backend` (Python 3.12 slim), `Dockerfile.frontend` (3-stage Node 20 Alpine with standalone output), `.dockerignore`, and `deploy.sh` (one-command gcloud deploy script)
+2. **backend/config.py**: Made `base_url` dynamic via `model_post_init` (defaults from `self.port`); skips `GOOGLE_APPLICATION_CREDENTIALS` export when empty (Cloud Run uses metadata server)
+3. **frontend/next.config.js**: Added `output: 'standalone'` for Docker-optimized builds
+4. **Committed all pending work**: Chat UI, admin page, Amadeus flight search, backend chat module — 26 files, 1899 insertions
+5. **Deployed to Cloud Run**: Backend (`mundostra-api`) and frontend (`mundostra-web`) deployed via Cloud Shell using `deploy.sh`
+6. **Demo video script**: Drafted a pitch demo script tailored for Vinuta Chopra (CEO) based on CONTEXT.MD founder profiling
+
+### Deployment details
+- **GCP Project**: `gen-lang-client-0754692302`, region `us-central1`
+- **Backend service**: `mundostra-api` — Cloud Run, 1Gi memory, port 8000, env vars from `.env`
+- **Frontend service**: `mundostra-web` — Cloud Run, 512Mi memory, port 3000, `NEXT_PUBLIC_API_URL` baked at build time
+- **Cloud Build**: Uses `/tmp/cloudbuild-*.yaml` temp configs to specify custom Dockerfiles
+- **No `GOOGLE_APPLICATION_CREDENTIALS`** on Cloud Run — service account handles Vertex AI auth
+- **Important**: Cloud Run compute service account needs `roles/aiplatform.user` for Vertex AI
+
+### Files created
+- `Dockerfile.backend` — Python 3.12 slim, installs from pyproject.toml, runs uvicorn
+- `Dockerfile.frontend` — 3-stage (deps → build → run), standalone Next.js output
+- `.dockerignore` — excludes secrets, caches, .git, node_modules
+- `deploy.sh` — sources .env, builds via Cloud Build, deploys both services, prints URLs
+
+### Current state
+- 81 tests pass, frontend builds clean
+- All code pushed to GitHub (`Kaide-LABS/Mundostra`)
+- Cloud Run services deployed (may need redeploy after chat UI commit was pushed)
+
+### Next steps
+- Verify Cloud Run deployment has latest chat UI (run `git pull && ./deploy.sh` in Cloud Shell)
+- Grant Vertex AI User role to Cloud Run service account if not done
+- Record demo video using the script drafted this session
+- Phase 4 remaining: memo, API docs, cost analysis
+
 ## Future Enhancements (Nice-to-Haves)
 - **Ticket Image OCR**: Allow users to upload a photo of their boarding pass/ticket in chat. Use Gemini vision to extract flight number, origin, destination — skipping the text gathering flow.
 - **Auto-Generated Ticket PDF**: After booking is confirmed, automatically generate a downloadable ticket/boarding pass file with the new flight details.
