@@ -1,0 +1,12 @@
+.env
+.venv
+node_modules
+.git
+.git/
+__pycache__
+.pytest_cache
+.mypy_cache
+.ruff_cache
+*.csv
+service-account.json
+.next

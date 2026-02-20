@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     comms_model_id: str = "gpt-4o"
 
+    # Amadeus Flight Search
+    amadeus_client_id: str = ""
+    amadeus_client_secret: str = ""
+    amadeus_env: str = "test"  # "test" or "production"
+
     # Gmail
     gmail_enabled: bool = False
     gmail_sender: str = ""
@@ -47,8 +52,12 @@ class Settings(BaseSettings):
     # Orchestrator thresholds
     confidence_threshold: float = 0.7
 
-    # Internal base URL for mock API calls
-    base_url: str = "http://127.0.0.1:8000"
+    # Internal base URL for mock API calls (auto-set from port if not provided)
+    base_url: str = ""
+
+    def model_post_init(self, __context: object) -> None:
+        if not self.base_url:
+            self.base_url = f"http://127.0.0.1:{self.port}"
 
 
 @lru_cache
