@@ -27,15 +27,16 @@ echo ""
 
 # --- Step 1: Build & push backend image ---
 echo ">>> Building backend image..."
-gcloud builds submit \
-  --project="${PROJECT_ID}" \
-  --tag="${BACKEND_IMAGE}" \
-  --config=/dev/stdin <<CBEOF
+cat > /tmp/cloudbuild-backend.yaml <<CBEOF
 steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-f', 'Dockerfile.backend', '-t', '${BACKEND_IMAGE}', '.']
 images: ['${BACKEND_IMAGE}']
 CBEOF
+gcloud builds submit \
+  --project="${PROJECT_ID}" \
+  --config=/tmp/cloudbuild-backend.yaml \
+  --quiet
 
 # --- Step 2: Deploy backend to Cloud Run ---
 echo ">>> Deploying backend service..."
@@ -83,15 +84,16 @@ WS_URL="wss://${BACKEND_HOST}/ws/trace"
 
 # --- Step 4: Build & push frontend image ---
 echo ">>> Building frontend image..."
-gcloud builds submit \
-  --project="${PROJECT_ID}" \
-  --tag="${FRONTEND_IMAGE}" \
-  --config=/dev/stdin <<CBEOF
+cat > /tmp/cloudbuild-frontend.yaml <<CBEOF
 steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-f', 'Dockerfile.frontend', '--build-arg', 'NEXT_PUBLIC_API_URL=${BACKEND_URL}', '--build-arg', 'NEXT_PUBLIC_WS_URL=${WS_URL}', '-t', '${FRONTEND_IMAGE}', '.']
 images: ['${FRONTEND_IMAGE}']
 CBEOF
+gcloud builds submit \
+  --project="${PROJECT_ID}" \
+  --config=/tmp/cloudbuild-frontend.yaml \
+  --quiet
 
 # --- Step 5: Deploy frontend to Cloud Run ---
 echo ">>> Deploying frontend service..."
