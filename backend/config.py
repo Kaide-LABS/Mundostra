@@ -34,9 +34,11 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     comms_model_id: str = "gpt-4o"
 
-    # Microsoft Teams
-    teams_enabled: bool = False
-    teams_webhook_url: str = ""
+    # Gmail
+    gmail_enabled: bool = False
+    gmail_sender: str = ""
+    gmail_app_password: str = ""
+    gmail_recipient: str = ""
 
     # Server
     host: str = "0.0.0.0"

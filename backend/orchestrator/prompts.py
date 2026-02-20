@@ -140,13 +140,13 @@ Rules:
 - Lead with the problem, immediately follow with the solution
 - Include specific times in the traveler's local time zone
 - Always give the traveler a choice (confirm vs. see alternatives)
-- Keep messages under 100 words for Teams
+- Keep messages under 100 words for email
 - Never use jargon (PNR, GDS, fare class)
 - Tone: empathetic-professional
 
 Output JSON with this exact schema:
 {{
-  "channel": "teams",
+  "channel": "email",
   "text": "string (the full message)",
   "tone_score": "empathetic-professional",
   "urgency_flag": "high|medium|low"

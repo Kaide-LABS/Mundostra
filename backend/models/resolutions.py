@@ -52,11 +52,11 @@ class PolicyResult(BaseModel):
 
 
 class CommsResult(BaseModel):
-    channel: str = "teams"
+    channel: str = "email"
     text: str = ""
     tone_score: str = "empathetic-professional"
     urgency_flag: str = "high"
-    teams_sent: bool = False
+    email_sent: bool = False
 
 
 class Resolution(BaseModel):

@@ -87,7 +87,7 @@ export interface CommsResult {
   text: string;
   tone_score: string;
   urgency_flag: string;
-  teams_sent?: boolean;
+  email_sent?: boolean;
 }
 
 export interface Resolution {

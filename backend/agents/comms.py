@@ -1,7 +1,7 @@
 """Comms Agent — GPT-4o via OpenAI.
 
 Drafts traveler-facing messages with empathy and clarity.
-Optionally sends a real Teams message if a TeamsSender is configured.
+Optionally sends a real email if a GmailSender is configured.
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ class CommsAgent(BaseAgent):
     agent_name = AgentName.COMMS
 
     def __init__(self, **kwargs: Any) -> None:
-        self.teams_sender = kwargs.pop("teams_sender", None)
+        self.gmail_sender = kwargs.pop("gmail_sender", None)
         super().__init__(**kwargs)
         settings = get_settings()
         self.model_id = settings.comms_model_id
@@ -36,7 +36,7 @@ class CommsAgent(BaseAgent):
         await self.emit_trace(
             event_id=task.event_id,
             status=TraceStatus.WORKING,
-            message=f"Drafting Teams notification for {traveler.get('name', 'traveler')}...",
+            message=f"Drafting email notification for {traveler.get('name', 'traveler')}...",
         )
 
         if self.mock_llm:
@@ -55,7 +55,7 @@ class CommsAgent(BaseAgent):
                 f"Calendar conflict: {chosen.get('calendar_conflict', False)}\n"
                 f"Auto-approved: {event_data.get('auto_approved', True)}\n"
                 f"Confidence score: {confidence}\n\n"
-                f"Draft a Teams message for this traveler."
+                f"Draft an email message for this traveler."
             )
             llm_response = await self._call_llm(COMMS_SYSTEM_PROMPT, user_message)
             task.tokens_used = 892
@@ -66,13 +66,13 @@ class CommsAgent(BaseAgent):
             except json.JSONDecodeError:
                 result = self._get_mock_response(task)
 
-        # Send real Teams message if sender is configured
-        if self.teams_sender is not None:
-            result = await self._send_teams(task, result, event_data, chosen, confidence)
+        # Send real email if sender is configured
+        if self.gmail_sender is not None:
+            result = await self._send_email(task, result, event_data, chosen, confidence)
 
         return result
 
-    async def _send_teams(
+    async def _send_email(
         self,
         task: AgentTask,
         result: dict[str, Any],
@@ -80,13 +80,13 @@ class CommsAgent(BaseAgent):
         chosen: dict[str, Any],
         confidence: float,
     ) -> dict[str, Any]:
-        """Send an Adaptive Card to Teams and mark result as sent."""
-        from backend.teams.cards import build_resolution_card
+        """Send an HTML email via Gmail and mark result as sent."""
+        from backend.gmail.emails import build_resolution_email
 
         event_id_str = str(task.event_id)
         traveler = event_data.get("traveler", {})
 
-        card = build_resolution_card(
+        email = build_resolution_email(
             event_id=event_id_str,
             traveler_name=traveler.get("name", "Traveler"),
             cancelled_flight=event_data.get("cancelled_flight", ""),
@@ -101,17 +101,17 @@ class CommsAgent(BaseAgent):
             message_text=result.get("text", ""),
         )
 
-        success = await self.teams_sender.send_resolution(
+        success = await self.gmail_sender.send_resolution(
             event_id=event_id_str,
-            card=card,
+            email=email,
         )
 
-        result["teams_sent"] = success
+        result["email_sent"] = success
 
         await self.emit_trace(
             event_id=task.event_id,
             status=TraceStatus.WORKING,
-            message=f"Teams message sent: {success}",
+            message=f"Email sent: {success}",
         )
 
         return result
@@ -131,7 +131,7 @@ class CommsAgent(BaseAgent):
         task.cost_usd = 0.0045
 
         return {
-            "channel": "teams",
+            "channel": "email",
             "text": (
                 f"Hi {name} \u2014 your flight {cancelled} ({origin}\u2192{dest}) has been "
                 f"cancelled. I've found you a seat on {flight_num}, departing at 6:30 PM "

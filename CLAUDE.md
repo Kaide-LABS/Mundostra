@@ -8,7 +8,7 @@ Multi-Agent Travel OS Support System — demo platform showing autonomous flight
 - **Frontend**: Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS, Framer Motion
 - **Real-time**: WebSocket trace streaming from backend to dashboard
 - **Agents**: BaseAgent → ResearchAgent, PolicyAgent, CommsAgent, orchestrated by OrchestratorEngine
-- **Messaging**: Microsoft Teams via Incoming Webhook (send-only Adaptive Cards)
+- **Messaging**: Gmail via SMTP (send-only HTML emails with App Password)
 - **Mock mode**: `MOCK_LLM=true` for deterministic demo without real API keys
 
 ## Quality Gates
@@ -38,7 +38,7 @@ make frontend-typecheck  # tsc --noEmit
 ## Completed Phases
 - **Phase 1** (Backend): Multi-agent system, mock APIs, orchestration engine, WebSocket trace
 - **Phase 2** (Frontend): Dashboard with EventPanel, AgentStream, Timeline, ConfidenceGauge, CostTicker, ModelUsage, ControlBar
-- **Phase 3** (Teams Integration & Polish): Teams Adaptive Card messages, traveler response flow, reset endpoint, error states, mobile refinements
+- **Phase 3** (Messaging & Polish): Gmail HTML email messages (replaced Discord), traveler response flow, reset endpoint, error states, mobile refinements
 
 ## Session Handoff — 2026-02-19 (Session 2)
 
@@ -94,8 +94,45 @@ Three demo-enhancing changes:
 | AWS Bedrock (Opus 4 + Haiku 3.5) | Working | 2026-02-20 |
 | Google Vertex AI (Gemini 2.5 Flash) | Working | 2026-02-20 |
 | OpenAI (GPT-4o) | Working | 2026-02-20 |
-| Microsoft Teams | Not yet configured | — |
+| Discord | Not yet configured | — |
 
 ### Next steps
-- Create Teams Incoming Webhook and add URL to `.env`
+- Phase 4: pitch collateral (memo, API docs, cost analysis, Cloud Run deploy)
+
+## Session Handoff — 2026-02-20 (Session 4)
+
+### What was done
+**Discord → Gmail (SMTP)**: Complete migration from Discord webhooks to Gmail SMTP emails.
+- Created `backend/gmail/` package (`emails.py`, `sender.py`, `__init__.py`)
+- `emails.py`: 3 HTML email builders with inline CSS (`build_resolution_email`, `build_confirmation_email`, `build_options_email`)
+- `sender.py`: `GmailSender` class using `aiosmtplib` (smtp.gmail.com:587, STARTTLS, App Password)
+- Deleted `backend/discord_integration/` (embeds.py, sender.py, __init__.py)
+- Updated `backend/config.py`: `discord_enabled`/`discord_webhook_url` → `gmail_enabled`/`gmail_sender`/`gmail_app_password`/`gmail_recipient`
+- Updated `backend/models/resolutions.py`: `CommsResult.channel="email"`, `discord_sent` → `email_sent`
+- Updated `backend/agents/comms.py`: `discord_sender` → `gmail_sender`, `_send_discord()` → `_send_email()`
+- Updated `backend/orchestrator/engine.py`: `DiscordSender` → `GmailSender`, builds email dicts instead of embeds
+- Updated `backend/orchestrator/prompts.py`: "Discord" → "email" in comms system prompt
+- Created `frontend/src/components/EmailPreview.tsx` (Gmail red #EA4335, envelope icon)
+- Deleted `frontend/src/components/DiscordPreview.tsx`
+- Updated `frontend/src/components/EventPanel.tsx`: uses `EmailPreview`, reads `email_sent`
+- Updated `frontend/src/types/api.ts`: `discord_sent` → `email_sent`
+- Created `backend/tests/test_gmail_emails.py`, updated `test_e2e.py` and `test_agents.py`
+- Added `aiosmtplib>=3.0.0` to `pyproject.toml`
+- Updated `.env`: Discord vars → Gmail vars
+
+### Current state
+- All 53 tests pass, frontend builds clean
+- Gmail integration ready to configure: set `GMAIL_ENABLED=true`, `GMAIL_SENDER`, `GMAIL_APP_PASSWORD`, `GMAIL_RECIPIENT`
+- Gmail requires a Google App Password (not regular password)
+
+### Credentials status
+| Service | Status | Verified |
+|---------|--------|----------|
+| AWS Bedrock (Opus 4 + Haiku 3.5) | Working | 2026-02-20 |
+| Google Vertex AI (Gemini 2.5 Flash) | Working | 2026-02-20 |
+| OpenAI (GPT-4o) | Working | 2026-02-20 |
+| Gmail (SMTP) | **Ready to configure** | Set `GMAIL_ENABLED=true` + credentials |
+
+### Next steps
+- Configure Gmail App Password and add to `.env`
 - Phase 4: pitch collateral (memo, API docs, cost analysis, Cloud Run deploy)

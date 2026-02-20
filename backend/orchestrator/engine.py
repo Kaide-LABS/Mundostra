@@ -17,6 +17,7 @@ from backend.agents.comms import CommsAgent
 from backend.agents.policy import PolicyAgent
 from backend.agents.research import ResearchAgent
 from backend.config import get_settings
+from backend.gmail.sender import GmailSender
 from backend.logging_config import get_logger
 from backend.message_bus.bus import MessageBus
 from backend.models.events import TravelEvent
@@ -40,7 +41,6 @@ from backend.orchestrator.prompts import (
     ORCHESTRATOR_SYNTHESIS_PROMPT,
     ORCHESTRATOR_SYSTEM_PROMPT,
 )
-from backend.teams.sender import TeamsSender
 
 logger = get_logger(__name__)
 
@@ -64,11 +64,18 @@ class OrchestratorEngine:
         self.settings = get_settings()
         self.resolutions: dict[UUID, Resolution] = {}
 
-        # Conditionally create Teams sender
-        self.teams_sender: TeamsSender | None = None
-        if self.settings.teams_enabled and self.settings.teams_webhook_url:
-            self.teams_sender = TeamsSender(
-                webhook_url=self.settings.teams_webhook_url,
+        # Conditionally create Gmail sender
+        self.gmail_sender: GmailSender | None = None
+        if (
+            self.settings.gmail_enabled
+            and self.settings.gmail_sender
+            and self.settings.gmail_app_password
+            and self.settings.gmail_recipient
+        ):
+            self.gmail_sender = GmailSender(
+                sender_email=self.settings.gmail_sender,
+                app_password=self.settings.gmail_app_password,
+                recipient_email=self.settings.gmail_recipient,
             )
 
         agent_kwargs: dict[str, Any] = {
@@ -79,7 +86,7 @@ class OrchestratorEngine:
         }
         self.research_agent = ResearchAgent(**agent_kwargs)
         self.policy_agent = PolicyAgent(**agent_kwargs)
-        self.comms_agent = CommsAgent(teams_sender=self.teams_sender, **agent_kwargs)
+        self.comms_agent = CommsAgent(gmail_sender=self.gmail_sender, **agent_kwargs)
 
     async def handle_event(self, event: TravelEvent) -> Resolution:
         start = time.monotonic()
@@ -434,8 +441,8 @@ class OrchestratorEngine:
 
         Called from the REST endpoint.
         """
+        from backend.gmail.emails import build_confirmation_email, build_options_email
         from backend.models.responses import TravelerResponseType
-        from backend.teams.cards import build_confirmation_card, build_options_card
 
         event_id = UUID(event_id_str)
         resolution = self.resolutions.get(event_id)
@@ -483,20 +490,20 @@ class OrchestratorEngine:
                 f"Booking confirmed — {resolution.chosen_option.flight if resolution.chosen_option else 'N/A'}",
             )
 
-            # Send confirmation card to Teams if sender exists
-            if self.teams_sender and resolution.chosen_option:
+            # Send confirmation email if sender exists
+            if self.gmail_sender and resolution.chosen_option:
                 try:
                     traveler_name = ""
                     if resolution.comms_result:
                         traveler_name = "Traveler"
-                    card = build_confirmation_card(
+                    email = build_confirmation_email(
                         traveler_name=traveler_name,
                         chosen_flight=resolution.chosen_option.flight,
                         departure=str(resolution.chosen_option.departure),
                     )
-                    await self.teams_sender.send_resolution(
+                    await self.gmail_sender.send_resolution(
                         event_id=event_id_str,
-                        card=card,
+                        email=email,
                     )
                 except Exception:
                     pass  # Non-critical — dashboard still reflects confirmation
@@ -516,16 +523,16 @@ class OrchestratorEngine:
                 data={"alternatives": alternatives_data},
             )
 
-            # Send options card to Teams
-            if self.teams_sender:
+            # Send options email
+            if self.gmail_sender:
                 try:
-                    card = build_options_card(
+                    email = build_options_email(
                         traveler_name="Traveler",
                         alternatives=alternatives_data,
                     )
-                    await self.teams_sender.send_resolution(
+                    await self.gmail_sender.send_resolution(
                         event_id=event_id_str,
-                        card=card,
+                        email=email,
                     )
                 except Exception:
                     pass

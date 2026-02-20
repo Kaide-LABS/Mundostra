@@ -2,7 +2,7 @@
 
 import { useDashboard } from '@/context/DashboardContext';
 import { Card } from '@/components/ui/Card';
-import { TeamsPreview } from '@/components/TeamsPreview';
+import { EmailPreview } from '@/components/EmailPreview';
 
 const STATUS_BADGES: Record<string, { bg: string; text: string; label: string }> = {
   proposed: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'PROPOSED' },
@@ -97,7 +97,7 @@ export function EventPanel() {
                 <span className="font-mono text-xs text-gray-700">{event.traveler.email}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">Teams</span>
+                <span className="text-gray-500">Contact</span>
                 <span className="font-mono text-xs text-gray-700">{event.traveler.messaging_id}</span>
               </div>
               <div className="flex justify-between">
@@ -175,11 +175,11 @@ export function EventPanel() {
             </Card>
           )}
 
-          {/* Teams Preview — show comms message */}
+          {/* Email Preview — show comms message */}
           {resolution?.comms_result && (
-            <TeamsPreview
+            <EmailPreview
               text={resolution.comms_result.text}
-              teamsSent={resolution.comms_result.teams_sent}
+              emailSent={resolution.comms_result.email_sent}
             />
           )}
         </>
