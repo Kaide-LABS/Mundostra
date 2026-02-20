@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -20,13 +21,14 @@ class Settings(BaseSettings):
     aws_secret_access_key: str = ""
 
     # Bedrock model IDs
-    orchestrator_model_id: str = "us.anthropic.claude-sonnet-4-20250514-v1:0"
+    orchestrator_model_id: str = "us.anthropic.claude-opus-4-20250514-v1:0"
     policy_model_id: str = "us.anthropic.claude-3-5-haiku-20241022-v1:0"
 
     # Google Vertex AI
     gcp_project_id: str = ""
     gcp_location: str = "us-central1"
-    research_model_id: str = "gemini-3-flash-preview"
+    google_application_credentials: str = ""
+    research_model_id: str = "gemini-2.5-flash"
 
     # OpenAI
     openai_api_key: str = ""
@@ -49,4 +51,10 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    if settings.google_application_credentials:
+        os.environ.setdefault(
+            "GOOGLE_APPLICATION_CREDENTIALS",
+            settings.google_application_credentials,
+        )
+    return settings

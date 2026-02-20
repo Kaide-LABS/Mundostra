@@ -1,7 +1,7 @@
 # Mundostra Travel OS — Project CLAUDE.md
 
 ## Project Overview
-Multi-Agent Travel OS Support System — demo platform showing autonomous flight disruption resolution using Claude Opus (orchestrator), Claude Haiku (policy), Gemini 3 Flash Preview (research), and GPT-4o (comms).
+Multi-Agent Travel OS Support System — demo platform showing autonomous flight disruption resolution using Claude Opus 4 (orchestrator), Claude 3.5 Haiku (policy), Gemini 2.5 Flash (research), and GPT-4o (comms).
 
 ## Architecture
 - **Backend**: FastAPI (Python 3.12+), async, Pydantic models, in-memory message bus
@@ -70,9 +70,32 @@ Three demo-enhancing changes:
 | Microsoft Teams | **Ready to configure** | Set `TEAMS_ENABLED=true` + `TEAMS_WEBHOOK_URL` once webhook created |
 
 ### Next steps
-- Verify AWS Bedrock model access is enabled for Claude Opus + Haiku in us-east-1
-- Verify Gemini 3 Flash Preview is available in Vertex AI us-central1
 - Create Teams Incoming Webhook and add URL to `.env`
-- Test end-to-end with real LLMs (`MOCK_LLM=false`)
-- Set up git remote and push
+- Phase 4: pitch collateral (memo, API docs, cost analysis, Cloud Run deploy)
+
+## Session Handoff — 2026-02-20 (Session 3)
+
+### What was done
+1. **Orchestrator model → Claude Opus 4**: Changed `orchestrator_model_id` from `us.anthropic.claude-sonnet-4-20250514-v1:0` to `us.anthropic.claude-opus-4-20250514-v1:0`
+2. **Research model → Gemini 2.5 Flash**: `gemini-3-flash-preview` was not available on the Vertex AI project; switched to `gemini-2.5-flash` which is the latest accessible model
+3. **Fixed GCP credentials propagation**: Added `google_application_credentials` field to Settings and auto-export to `os.environ` on startup so Vertex AI SDK picks it up from `.env`
+4. **Verified all 4 LLM credentials**: AWS Bedrock (Opus + Haiku), Vertex AI (Gemini 2.5 Flash), OpenAI (GPT-4o) — all confirmed working
+5. **Successful E2E test with real LLMs**: Full flight cancellation scenario — orchestrator coordinated research (6 alternatives found), policy (auto-approve eligible), comms (empathetic message generated). Confidence 0.94, cost $0.014, ~83s total
+6. **Pushed to GitHub**: Private repo `Mundostra` created, all code pushed
+
+### Current state
+- All 53 tests pass, real LLM E2E verified
+- GitHub remote configured and code pushed
+- `MOCK_LLM=false` in `.env` for real LLM mode
+
+### Credentials status
+| Service | Status | Verified |
+|---------|--------|----------|
+| AWS Bedrock (Opus 4 + Haiku 3.5) | Working | 2026-02-20 |
+| Google Vertex AI (Gemini 2.5 Flash) | Working | 2026-02-20 |
+| OpenAI (GPT-4o) | Working | 2026-02-20 |
+| Microsoft Teams | Not yet configured | — |
+
+### Next steps
+- Create Teams Incoming Webhook and add URL to `.env`
 - Phase 4: pitch collateral (memo, API docs, cost analysis, Cloud Run deploy)
