@@ -1,6 +1,7 @@
-"""Research Agent — Gemini 3 Flash via Vertex AI.
+"""Research Agent — Gemini 2.5 Flash via Vertex AI.
 
 Finds alternative flights, checks calendar conflicts, ranks options.
+Uses Amadeus Flight Offers Search API when available, falls back to mock.
 """
 
 from __future__ import annotations
@@ -26,29 +27,100 @@ class ResearchAgent(BaseAgent):
         settings = get_settings()
         self.model_id = settings.research_model_id
 
+    def _amadeus_configured(self) -> bool:
+        """Check if Amadeus credentials are present."""
+        settings = get_settings()
+        return bool(settings.amadeus_client_id and settings.amadeus_client_secret)
+
+    async def _search_amadeus(self, origin: str, destination: str, date_str: str) -> list[dict[str, Any]]:
+        """Search real flights via Amadeus Flight Offers Search API."""
+        from amadeus import Client  # type: ignore[import-untyped]
+
+        settings = get_settings()
+        amadeus = Client(
+            client_id=settings.amadeus_client_id,
+            client_secret=settings.amadeus_client_secret,
+            hostname=settings.amadeus_env,
+        )
+
+        response = await asyncio.to_thread(
+            amadeus.shopping.flight_offers_search.get,
+            originLocationCode=origin,
+            destinationLocationCode=destination,
+            departureDate=date_str,
+            adults=1,
+            max=10,
+        )
+
+        return self._transform_amadeus_response(response.data)
+
+    def _transform_amadeus_response(self, offers: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Map Amadeus offers to our FlightAlternative structure."""
+        alternatives: list[dict[str, Any]] = []
+        for offer in offers:
+            itinerary = offer["itineraries"][0]  # outbound only
+            segments = itinerary["segments"]
+            first_seg = segments[0]
+            last_seg = segments[-1]
+
+            carrier = first_seg["carrierCode"]
+            number = first_seg["number"]
+
+            alternatives.append({
+                "flight": f"{carrier} {number}",
+                "airline": carrier,
+                "origin": first_seg["departure"]["iataCode"],
+                "destination": last_seg["arrival"]["iataCode"],
+                "departure": first_seg["departure"]["at"],
+                "arrival": last_seg["arrival"]["at"],
+                "price": float(offer["price"]["total"]),
+                "seat_available": True,  # Amadeus only returns available offers
+                "cabin": "economy",
+                "number_of_stops": len(segments) - 1,
+            })
+        return alternatives
+
+    async def _search_mock(self, client: Any, origin: str, destination: str) -> list[dict[str, Any]]:
+        """Search flights via mock API."""
+        flight_resp = await client.get(
+            "/mock/flights/search",
+            params={"origin": origin, "destination": destination},
+        )
+        flight_data = flight_resp.json()
+        return flight_data.get("alternatives", [])  # type: ignore[no-any-return]
+
     async def run(self, task: AgentTask) -> dict[str, Any]:
         event_data = task.input_data
         flight = event_data.get("flight", {})
         traveler = event_data.get("traveler", {})
+        origin = flight.get("origin", "SFO")
+        destination = flight.get("destination", "JFK")
 
-        # Step 1: Query mock flight API
+        # Step 1: Get alternative flights
         await self.emit_trace(
             event_id=task.event_id,
             status=TraceStatus.WORKING,
-            message=f"Searching alternative flights {flight.get('origin', 'SFO')} → {flight.get('destination', 'JFK')}...",
+            message=f"Searching alternative flights {origin} → {destination}...",
         )
 
-        async with self._make_http_client() as client:
-            flight_resp = await client.get(
-                "/mock/flights/search",
-                params={
-                    "origin": flight.get("origin", "SFO"),
-                    "destination": flight.get("destination", "JFK"),
-                },
-            )
-            flight_data = flight_resp.json()
+        # Use Amadeus when not in mock mode and credentials are configured
+        if not self.mock_llm and self._amadeus_configured():
+            try:
+                from datetime import date
 
-        alternatives = flight_data.get("alternatives", [])
+                date_str = flight.get("date", date.today().isoformat())
+                alternatives = await self._search_amadeus(origin, destination, date_str)
+                source = "amadeus_api"
+                logger.info("amadeus_search_success", origin=origin, destination=destination, count=len(alternatives))
+            except Exception as exc:
+                logger.warning("amadeus_search_failed", error=str(exc), fallback="mock_api")
+                async with self._make_http_client() as client:
+                    alternatives = await self._search_mock(client, origin, destination)
+                source = "mock_inventory_api"
+        else:
+            async with self._make_http_client() as client:
+                alternatives = await self._search_mock(client, origin, destination)
+            source = "mock_inventory_api"
 
         await self.emit_trace(
             event_id=task.event_id,
@@ -56,7 +128,7 @@ class ResearchAgent(BaseAgent):
             message=f"Found {len(alternatives)} flight options. Checking calendar conflicts...",
         )
 
-        # Step 2: Check calendar for each available flight
+        # Step 2: Check calendar for each available flight (always uses mock calendar)
         enriched: list[dict[str, Any]] = []
         original_price = flight.get("original_price", 400.0)
 
@@ -88,7 +160,7 @@ class ResearchAgent(BaseAgent):
                         "conflict_details": cal_data.get("conflict_details"),
                         "price_vs_original": delta_str,
                         "seat_available": True,
-                        "source": "mock_inventory_api",
+                        "source": source,
                     }
                 )
 
@@ -98,7 +170,7 @@ class ResearchAgent(BaseAgent):
 
         user_message = (
             f"Cancelled flight: {flight.get('number', 'UA100')} "
-            f"from {flight.get('origin', 'SFO')} to {flight.get('destination', 'JFK')}\n"
+            f"from {origin} to {destination}\n"
             f"Original price: ${original_price}\n"
             f"Traveler: {traveler.get('name', 'Unknown')}, {traveler.get('role', 'Unknown')}\n"
             f"Timezone: {traveler.get('timezone', 'America/Los_Angeles')}\n\n"
@@ -170,6 +242,6 @@ class ResearchAgent(BaseAgent):
                 user_message,
                 generation_config={"response_mime_type": "application/json"},
             )
-            return response.text  # type: ignore[return-value]
+            return response.text
 
         return await asyncio.to_thread(_sync_call)

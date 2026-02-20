@@ -5,6 +5,8 @@ import type {
   TravelerResponseType,
   ResetResponse,
   HealthResponse,
+  ChatApiResponse,
+  ChatStatusApiResponse,
 } from '@/types';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
@@ -43,4 +45,13 @@ export const api = {
     request<ResetResponse>('/api/reset', {
       method: 'POST',
     }),
+
+  sendChatMessage: (message: string, sessionId?: string) =>
+    request<ChatApiResponse>('/api/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message, session_id: sessionId }),
+    }),
+
+  getChatStatus: (eventId: string) =>
+    request<ChatStatusApiResponse>(`/api/chat/status/${eventId}`),
 };

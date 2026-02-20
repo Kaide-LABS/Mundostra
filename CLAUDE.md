@@ -136,3 +136,7 @@ Three demo-enhancing changes:
 ### Next steps
 - Configure Gmail App Password and add to `.env`
 - Phase 4: pitch collateral (memo, API docs, cost analysis, Cloud Run deploy)
+
+## Future Enhancements (Nice-to-Haves)
+- **Ticket Image OCR**: Allow users to upload a photo of their boarding pass/ticket in chat. Use Gemini vision to extract flight number, origin, destination — skipping the text gathering flow.
+- **Auto-Generated Ticket PDF**: After booking is confirmed, automatically generate a downloadable ticket/boarding pass file with the new flight details.

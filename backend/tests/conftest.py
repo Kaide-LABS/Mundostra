@@ -15,6 +15,7 @@ os.environ["APP_ENV"] = "test"
 os.environ["BASE_URL"] = "http://test"
 
 import backend.main as main_module  # noqa: E402
+from backend.chat.parser import ChatParser  # noqa: E402
 from backend.main import _init_engine, app, bus  # noqa: E402
 from backend.models.events import (  # noqa: E402
     EventType,
@@ -27,6 +28,9 @@ from backend.models.events import (  # noqa: E402
 # Create the ASGI transport and initialize the engine with it
 _transport = ASGITransport(app=app)  # type: ignore[arg-type]
 _init_engine(http_transport=_transport)
+
+# Initialize chat parser for tests
+main_module.chat_parser = ChatParser(mock_llm=True)
 
 
 @pytest.fixture
@@ -68,3 +72,6 @@ def _clean_state() -> None:
     """Clean state between tests."""
     main_module.engine.resolutions.clear()
     bus._history.clear()
+    main_module.chat_sessions.clear()
+    main_module.chat_pending.clear()
+    main_module.chat_events.clear()

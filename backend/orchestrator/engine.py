@@ -452,6 +452,14 @@ class OrchestratorEngine:
         response_type: TravelerResponseType = response.response_type
 
         if response_type == TravelerResponseType.CONFIRM:
+            # If user selected a specific option, swap chosen_option
+            selected: int | None = getattr(response, "selected_option", None)
+            if selected is not None and resolution.research_result:
+                alts = resolution.research_result.alternatives
+                idx = selected - 1  # convert 1-based to 0-based
+                if 0 <= idx < len(alts):
+                    resolution.chosen_option = alts[idx]
+
             resolution.status = ResolutionStatus.CONFIRMED
 
             # Authorize virtual card via mock API

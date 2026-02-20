@@ -138,3 +138,19 @@ export interface ResetResponse {
 export interface HealthResponse {
   status: string;
 }
+
+// Chat types
+export interface ChatApiResponse {
+  session_id: string;
+  intent: string;
+  acknowledgment: string;
+  event_id?: string;
+  status?: string;
+  resolution?: Resolution;
+}
+
+export interface ChatStatusApiResponse {
+  status: 'processing' | 'complete' | 'error';
+  event_id: string;
+  resolution?: Resolution;
+}

@@ -16,3 +16,4 @@ class TravelerResponseType(StrEnum):
 class TravelerResponse(BaseModel):
     event_id: str
     response_type: TravelerResponseType
+    selected_option: int | None = None  # 1-based index into alternatives list

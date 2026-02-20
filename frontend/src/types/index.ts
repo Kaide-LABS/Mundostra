@@ -20,6 +20,8 @@ export type {
   TravelerResponsePayload,
   ResetResponse,
   HealthResponse,
+  ChatApiResponse,
+  ChatStatusApiResponse,
 } from './api';
 
 export { DEMO_EVENT } from './demo';
