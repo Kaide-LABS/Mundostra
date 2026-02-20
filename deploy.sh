@@ -30,8 +30,12 @@ echo ">>> Building backend image..."
 gcloud builds submit \
   --project="${PROJECT_ID}" \
   --tag="${BACKEND_IMAGE}" \
-  --dockerfile=Dockerfile.backend \
-  --quiet
+  --config=/dev/stdin <<CBEOF
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-f', 'Dockerfile.backend', '-t', '${BACKEND_IMAGE}', '.']
+images: ['${BACKEND_IMAGE}']
+CBEOF
 
 # --- Step 2: Deploy backend to Cloud Run ---
 echo ">>> Deploying backend service..."
@@ -82,10 +86,12 @@ echo ">>> Building frontend image..."
 gcloud builds submit \
   --project="${PROJECT_ID}" \
   --tag="${FRONTEND_IMAGE}" \
-  --dockerfile=Dockerfile.frontend \
-  --build-arg="NEXT_PUBLIC_API_URL=${BACKEND_URL}" \
-  --build-arg="NEXT_PUBLIC_WS_URL=${WS_URL}" \
-  --quiet
+  --config=/dev/stdin <<CBEOF
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-f', 'Dockerfile.frontend', '--build-arg', 'NEXT_PUBLIC_API_URL=${BACKEND_URL}', '--build-arg', 'NEXT_PUBLIC_WS_URL=${WS_URL}', '-t', '${FRONTEND_IMAGE}', '.']
+images: ['${FRONTEND_IMAGE}']
+CBEOF
 
 # --- Step 5: Deploy frontend to Cloud Run ---
 echo ">>> Deploying frontend service..."
