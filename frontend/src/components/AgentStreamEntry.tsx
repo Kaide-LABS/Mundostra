@@ -34,29 +34,29 @@ export function AgentStreamEntry({ entry, index, isExpanded, onToggle }: Props) 
       <button
         onClick={onToggle}
         className={`flex min-h-[44px] w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-bg-hover ${
-          isError ? 'border-l-2 border-red-500 bg-red-500/5' : ''
+          isError ? 'border-l-2 border-red-400 bg-red-50' : ''
         }`}
       >
         <AgentIcon agent={entry.agent} size="sm" />
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-gray-300">{agentLabel(entry.agent)}</span>
+            <span className="text-xs font-semibold text-gray-800">{agentLabel(entry.agent)}</span>
             <StatusBadge status={entry.status} />
-            <span className="ml-auto hidden font-mono text-[10px] text-gray-600 sm:inline">
+            <span className="ml-auto hidden font-mono text-[10px] text-gray-400 sm:inline">
               {time}
             </span>
           </div>
-          <p className={`mt-0.5 text-sm ${isError ? 'font-medium text-red-400' : 'text-gray-400'}`}>
+          <p className={`mt-0.5 text-sm ${isError ? 'font-medium text-red-600' : 'text-gray-600'}`}>
             {entry.message}
           </p>
           {errorData && (
-            <pre className="mt-1 overflow-x-auto rounded bg-red-500/10 p-1.5 font-mono text-[11px] text-red-300">
+            <pre className="mt-1 overflow-x-auto rounded bg-red-50 p-1.5 font-mono text-[11px] text-red-600">
               {errorData}
             </pre>
           )}
           {(entry.tokens_used > 0 || entry.cost_usd > 0) && (
-            <div className="mt-1 flex gap-3 text-[10px] text-gray-600">
+            <div className="mt-1 flex gap-3 text-[10px] text-gray-400">
               {entry.model && <span>{entry.model.split('/').pop()}</span>}
               {entry.tokens_used > 0 && <span>{entry.tokens_used} tok</span>}
               {entry.cost_usd > 0 && <span>${entry.cost_usd.toFixed(4)}</span>}
@@ -70,7 +70,7 @@ export function AgentStreamEntry({ entry, index, isExpanded, onToggle }: Props) 
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
-          className="ml-12 mb-2 overflow-hidden rounded-lg border border-white/5 bg-[#0d1117] p-3"
+          className="ml-12 mb-2 overflow-hidden rounded-lg border border-gray-200 bg-gray-50 p-3"
         >
           <JsonInspector data={entry.data} />
         </motion.div>

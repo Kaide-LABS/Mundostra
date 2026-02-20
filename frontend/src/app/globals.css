@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --background: #0a0e1a;
-  --foreground: #e5e7eb;
+  --background: #f8f7fc;
+  --foreground: #1e1e2f;
 }
 
 * {
@@ -16,23 +16,23 @@ body {
   background: var(--background);
 }
 
-/* Custom scrollbar for dark theme */
+/* Custom scrollbar for light theme */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #111827;
+  background: #f0eef5;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #374151;
+  background: #c4bfd4;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #4b5563;
+  background: #a8a1ba;
 }
 
 /* Smooth scroll for agent stream */

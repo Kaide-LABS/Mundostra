@@ -3,11 +3,11 @@
 import type { TraceStatus } from '@/types';
 
 const STATUS_CONFIG: Record<TraceStatus, { label: string; bg: string; text: string }> = {
-  thinking: { label: 'Thinking', bg: 'bg-violet-500/20', text: 'text-violet-400' },
-  working: { label: 'Working', bg: 'bg-cyan-500/20', text: 'text-cyan-400' },
-  complete: { label: 'Complete', bg: 'bg-green-500/20', text: 'text-green-400' },
-  error: { label: 'Error', bg: 'bg-red-500/20', text: 'text-red-400' },
-  escalation: { label: 'Escalation', bg: 'bg-amber-500/20', text: 'text-amber-400' },
+  thinking: { label: 'Thinking', bg: 'bg-violet-100', text: 'text-violet-700' },
+  working: { label: 'Working', bg: 'bg-cyan-100', text: 'text-cyan-700' },
+  complete: { label: 'Complete', bg: 'bg-green-100', text: 'text-green-700' },
+  error: { label: 'Error', bg: 'bg-red-100', text: 'text-red-700' },
+  escalation: { label: 'Escalation', bg: 'bg-amber-100', text: 'text-amber-700' },
 };
 
 export function StatusBadge({ status }: { status: TraceStatus }) {

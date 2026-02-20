@@ -23,7 +23,7 @@ export function Timeline() {
 
   if (spans.length === 0) {
     return (
-      <div className="flex h-24 items-center justify-center rounded-xl border border-white/5 bg-bg-surface text-sm text-gray-600">
+      <div className="flex h-24 items-center justify-center rounded-xl border border-gray-200 bg-white shadow-sm text-sm text-gray-400">
         Timeline will appear during agent execution
       </div>
     );
@@ -34,8 +34,8 @@ export function Timeline() {
   const barAreaWidth = 600;
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-white/5 bg-bg-surface p-3">
-      <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm p-3">
+      <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
         Parallel Execution Timeline
       </h2>
       <svg
@@ -56,7 +56,7 @@ export function Timeline() {
                 y={y + BAR_HEIGHT / 2}
                 textAnchor="end"
                 dominantBaseline="central"
-                className="fill-gray-400 text-xs"
+                className="fill-gray-500 text-xs"
                 fontSize={11}
               >
                 {agentLabel(span.agent)}
@@ -76,7 +76,7 @@ export function Timeline() {
                 x={x + width + 6}
                 y={y + BAR_HEIGHT / 2}
                 dominantBaseline="central"
-                className="fill-gray-500"
+                className="fill-gray-400"
                 fontSize={10}
               >
                 {span.end - span.start > 0

@@ -10,9 +10,14 @@ const config: Config = {
     extend: {
       colors: {
         bg: {
-          DEFAULT: '#0a0e1a',
-          surface: '#111827',
-          hover: '#1f2937',
+          DEFAULT: '#f8f7fc',
+          surface: '#ffffff',
+          hover: '#f0eef5',
+        },
+        brand: {
+          purple: '#7c5cbf',
+          lavender: '#ede8f5',
+          peach: '#f5c6a0',
         },
         agent: {
           orchestrator: '#8b5cf6',

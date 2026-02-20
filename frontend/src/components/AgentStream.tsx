@@ -14,14 +14,14 @@ export function AgentStream() {
 
   return (
     <div className="flex h-full flex-col">
-      <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+      <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
         Agent Activity Stream
       </h2>
 
-      <div className="agent-stream flex-1 space-y-0.5 overflow-y-auto rounded-xl border border-white/5 bg-bg-surface p-2">
+      <div className="agent-stream flex-1 space-y-0.5 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-sm p-2">
         {state.traceEntries.length === 0 ? (
           <div className="flex h-full items-center justify-center">
-            <p className="text-sm text-gray-600">Waiting for agent activity...</p>
+            <p className="text-sm text-gray-400">Waiting for agent activity...</p>
           </div>
         ) : (
           state.traceEntries.map((entry, i) => (

@@ -30,7 +30,7 @@ export function ConfidenceGauge() {
 
   return (
     <Card className="flex flex-col items-center justify-center text-center">
-      <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+      <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
         Confidence
       </span>
       <svg width={160} height={90} className="mt-1">
@@ -38,7 +38,7 @@ export function ConfidenceGauge() {
         <path
           d={arcPath(1)}
           fill="none"
-          stroke="#1f2937"
+          stroke="#e5e7eb"
           strokeWidth={stroke}
           strokeLinecap="round"
         />
@@ -65,10 +65,10 @@ export function ConfidenceGauge() {
         >
           {score > 0 ? (score * 100).toFixed(0) + '%' : '--'}
         </text>
-        <text x={20} y={cy + 12} className="text-[9px]" fill="#6b7280">
+        <text x={20} y={cy + 12} className="text-[9px]" fill="#9ca3af">
           0
         </text>
-        <text x={140} y={cy + 12} textAnchor="end" className="text-[9px]" fill="#6b7280">
+        <text x={140} y={cy + 12} textAnchor="end" className="text-[9px]" fill="#9ca3af">
           100
         </text>
       </svg>

@@ -34,11 +34,11 @@ export function CostTicker() {
 
   return (
     <Card className="flex flex-col items-center justify-center text-center">
-      <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+      <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
         Total Cost
       </span>
       <motion.span
-        className="mt-1 font-mono text-2xl font-bold text-green-400"
+        className="mt-1 font-mono text-2xl font-bold text-green-600"
         key={target}
         initial={{ scale: 1.1 }}
         animate={{ scale: 1 }}

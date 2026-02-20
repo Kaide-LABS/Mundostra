@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { DashboardProvider } from '@/context/DashboardContext';
 import { EventPanel } from '@/components/EventPanel';
 import { AgentStream } from '@/components/AgentStream';
@@ -13,19 +14,23 @@ function Dashboard() {
   return (
     <div className="flex min-h-screen flex-col gap-3 overflow-x-hidden p-2 sm:p-4">
       {/* Header */}
-      <header className="flex items-center justify-between rounded-xl border border-white/5 bg-bg-surface px-3 py-2 sm:px-5 sm:py-3">
+      <header className="flex items-center justify-between rounded-xl border border-gray-200 bg-white shadow-sm px-3 py-2 sm:px-5 sm:py-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600 text-sm font-bold">
-            M
-          </div>
+          <Image
+            src="/logo.png"
+            alt="Mundostra"
+            width={32}
+            height={32}
+            className="rounded-lg"
+          />
           <div>
-            <h1 className="text-sm font-bold tracking-wide">MUNDOSTRA TRAVEL OS</h1>
-            <p className="text-[10px] uppercase tracking-widest text-gray-500">
+            <h1 className="text-sm font-bold tracking-wide text-gray-900">MUNDOSTRA TRAVEL OS</h1>
+            <p className="text-[10px] uppercase tracking-widest text-gray-400">
               Agent Command Center
             </p>
           </div>
         </div>
-        <span className="font-mono text-[10px] text-gray-600">v0.1.0</span>
+        <span className="font-mono text-[10px] text-gray-400">v0.1.0</span>
       </header>
 
       {/* Main Grid: EventPanel + AgentStream */}
