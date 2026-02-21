@@ -35,6 +35,7 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     session_id: str | None = None
+    image: str | None = None
 
 
 class ChatStatusResponse(BaseModel):

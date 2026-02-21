@@ -3,6 +3,8 @@
 import { motion } from 'framer-motion';
 import type { ChatMessage } from '@/context/ChatContext';
 
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+
 interface Props {
   message: ChatMessage;
 }
@@ -24,11 +26,40 @@ export function ChatMessageBubble({ message }: Props) {
             : 'bg-white border border-gray-200 text-gray-800 rounded-bl-md shadow-sm'
         }`}
       >
+        {/* Image preview for uploaded boarding passes */}
+        {message.imagePreview && (
+          <div className="mb-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={message.imagePreview}
+              alt="Uploaded boarding pass"
+              className="max-h-48 rounded-lg object-contain"
+            />
+          </div>
+        )}
+
         {message.content.split('\n').map((line, i) => (
           <p key={i} className={i > 0 ? 'mt-1' : ''}>
             {renderBold(line)}
           </p>
         ))}
+
+        {/* Ticket PDF download button */}
+        {message.ticketPdfUrl && (
+          <a
+            href={`${BASE_URL}${message.ticketPdfUrl}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-flex items-center gap-2 rounded-full bg-purple-100 px-4 py-2 text-xs font-medium text-purple-700 transition-colors hover:bg-purple-200"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Download Ticket PDF
+          </a>
+        )}
       </div>
     </motion.div>
   );

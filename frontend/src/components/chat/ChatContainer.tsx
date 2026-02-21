@@ -10,7 +10,7 @@ import { SuggestedChips } from './SuggestedChips';
 import { ResolutionCard } from './ResolutionCard';
 
 export function ChatContainer() {
-  const { state, sendMessage, reset } = useChat();
+  const { state, sendMessage, sendImage, reset } = useChat();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -82,8 +82,34 @@ export function ChatContainer() {
         </div>
       )}
 
+      {/* Persistent ticket download bar */}
+      {state.ticketPdfUrl && (
+        <div className="flex items-center justify-between border-t border-purple-200 bg-purple-50 px-4 py-2.5">
+          <div className="flex items-center gap-2 text-sm text-purple-700">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+            </svg>
+            <span className="font-medium">Your ticket is ready</span>
+          </div>
+          <a
+            href={`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'}${state.ticketPdfUrl}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-full bg-purple-600 px-4 py-1.5 text-xs font-medium text-white transition-colors hover:bg-purple-700"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Download PDF
+          </a>
+        </div>
+      )}
+
       {/* Input */}
-      <ChatInput onSend={sendMessage} disabled={state.isProcessing} />
+      <ChatInput onSend={sendMessage} onSendImage={sendImage} disabled={state.isProcessing} />
     </div>
   );
 }

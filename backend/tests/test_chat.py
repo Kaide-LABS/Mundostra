@@ -254,6 +254,68 @@ class TestChatEndpoints:
         assert data.get("status") == "no_active_event"
 
     @pytest.mark.asyncio
+    async def test_chat_image_upload_triggers_ocr(self, client: AsyncClient) -> None:
+        """Image upload should trigger OCR and fire orchestration (mock mode)."""
+        resp = await client.post(
+            "/api/chat",
+            json={
+                "message": "",
+                "session_id": "ocr-test",
+                "image": "data:image/jpeg;base64,/9j/fakedata",
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["intent"] == "flight_disruption"
+        # Mock OCR returns all fields → should fire orchestration immediately
+        assert data["status"] == "processing"
+        assert "event_id" in data
+        assert "boarding pass" in data["acknowledgment"].lower()
+
+    @pytest.mark.asyncio
+    async def test_ticket_pdf_download_404_when_missing(self, client: AsyncClient) -> None:
+        """PDF endpoint should return 404 for unknown event."""
+        resp = await client.get("/api/tickets/nonexistent/pdf")
+        assert resp.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_ticket_pdf_download_after_confirm(self, client: AsyncClient) -> None:
+        """After confirming a booking, PDF should be available."""
+        # Trigger disruption
+        resp = await client.post(
+            "/api/chat",
+            json={
+                "message": "My flight UA 2381 from SFO to JFK got cancelled",
+                "session_id": "pdf-test",
+            },
+        )
+        data = resp.json()
+        event_id = data["event_id"]
+
+        # Wait for resolution
+        for _ in range(120):
+            await asyncio.sleep(0.1)
+            status_resp = await client.get(f"/api/chat/status/{event_id}")
+            if status_resp.json()["status"] == "complete":
+                break
+
+        # Confirm booking
+        confirm_resp = await client.post(
+            "/api/chat",
+            json={"message": "Yes, book it", "session_id": "pdf-test"},
+        )
+        confirm_data = confirm_resp.json()
+        assert confirm_data["resolution"]["status"] == "confirmed"
+        assert confirm_data["resolution"].get("ticket_pdf_url") is not None
+
+        # Download PDF
+        pdf_url = confirm_data["resolution"]["ticket_pdf_url"]
+        pdf_resp = await client.get(pdf_url)
+        assert pdf_resp.status_code == 200
+        assert pdf_resp.headers["content-type"] == "application/pdf"
+        assert pdf_resp.content[:5] == b"%PDF-"
+
+    @pytest.mark.asyncio
     async def test_reset_clears_gathering_state(self, client: AsyncClient) -> None:
         """Reset should clear gathering context so session starts fresh."""
         sid = "reset-gather"

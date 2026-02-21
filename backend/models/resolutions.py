@@ -72,4 +72,5 @@ class Resolution(BaseModel):
     research_result: ResearchResult | None = None
     policy_result: PolicyResult | None = None
     comms_result: CommsResult | None = None
+    ticket_pdf_url: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

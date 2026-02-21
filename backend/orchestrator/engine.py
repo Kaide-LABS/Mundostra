@@ -63,6 +63,8 @@ class OrchestratorEngine:
         self.bus = bus
         self.settings = get_settings()
         self.resolutions: dict[UUID, Resolution] = {}
+        self.events: dict[UUID, TravelEvent] = {}
+        self.ticket_pdfs: dict[str, bytes] = {}
 
         # Conditionally create Gmail sender
         self.gmail_sender: GmailSender | None = None
@@ -91,6 +93,7 @@ class OrchestratorEngine:
     async def handle_event(self, event: TravelEvent) -> Resolution:
         start = time.monotonic()
         event_id = event.id
+        self.events[event_id] = event
 
         await self._emit(event_id, TraceStatus.THINKING, "Event received. Classifying...")
 
@@ -491,6 +494,41 @@ class OrchestratorEngine:
                 f"Card authorized: {card_data.get('card_last_four', '****')}",
                 data=card_data,
             )
+
+            # Generate ticket PDF
+            if resolution.chosen_option:
+                try:
+                    from backend.pdf.ticket import generate_ticket_pdf
+
+                    event_obj = self.events.get(event_id)
+                    pdf_bytes = generate_ticket_pdf(
+                        passenger_name=event_obj.traveler.name if event_obj else "Traveler",
+                        flight_number=resolution.chosen_option.flight,
+                        origin=resolution.chosen_option.flight[:2],  # fallback
+                        destination="",
+                        departure=str(resolution.chosen_option.departure),
+                        arrival=str(resolution.chosen_option.arrival),
+                        booking_ref=event_obj.booking_ref if event_obj else str(event_id)[:8],
+                        price=resolution.chosen_option.price,
+                        event_id=event_id_str,
+                    )
+                    # Use event data for accurate origin/destination
+                    if event_obj and event_obj.flight:
+                        pdf_bytes = generate_ticket_pdf(
+                            passenger_name=event_obj.traveler.name,
+                            flight_number=resolution.chosen_option.flight,
+                            origin=event_obj.flight.origin,
+                            destination=event_obj.flight.destination,
+                            departure=str(resolution.chosen_option.departure),
+                            arrival=str(resolution.chosen_option.arrival),
+                            booking_ref=event_obj.booking_ref,
+                            price=resolution.chosen_option.price,
+                            event_id=event_id_str,
+                        )
+                    self.ticket_pdfs[event_id_str] = pdf_bytes
+                    resolution.ticket_pdf_url = f"/api/tickets/{event_id_str}/pdf"
+                except Exception:
+                    pass  # Non-critical — booking still confirmed
 
             await self._emit(
                 event_id,

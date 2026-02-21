@@ -20,6 +20,8 @@ export interface ChatMessage {
   timestamp: Date;
   resolution?: Resolution;
   showOptions?: boolean;
+  imagePreview?: string;
+  ticketPdfUrl?: string;
 }
 
 export interface ChatState {
@@ -28,6 +30,7 @@ export interface ChatState {
   activeEventId: string | null;
   isProcessing: boolean;
   showChips: boolean;
+  ticketPdfUrl: string | null;
 }
 
 const initialState: ChatState = {
@@ -36,7 +39,7 @@ const initialState: ChatState = {
       id: 'welcome',
       role: 'assistant',
       content:
-        "Hello! I'm your Mundostra travel assistant. I can help you when flights get cancelled or delayed. What's going on?",
+        "Hello! I'm your Mundostra travel assistant. I can help you when flights get cancelled or delayed. Tell me what happened, or snap a photo of your boarding pass to get started.",
       timestamp: new Date(),
     },
   ],
@@ -44,13 +47,14 @@ const initialState: ChatState = {
   activeEventId: null,
   isProcessing: false,
   showChips: true,
+  ticketPdfUrl: null,
 };
 
 // ── Actions ────────────────────────────────────────────
 
 type Action =
-  | { type: 'ADD_USER_MESSAGE'; content: string }
-  | { type: 'ADD_ASSISTANT_MESSAGE'; content: string; resolution?: Resolution; showOptions?: boolean }
+  | { type: 'ADD_USER_MESSAGE'; content: string; imagePreview?: string }
+  | { type: 'ADD_ASSISTANT_MESSAGE'; content: string; resolution?: Resolution; showOptions?: boolean; ticketPdfUrl?: string }
   | { type: 'SET_PROCESSING'; processing: boolean }
   | { type: 'SET_EVENT_ID'; eventId: string }
   | { type: 'HIDE_CHIPS' }
@@ -68,6 +72,7 @@ function reducer(state: ChatState, action: Action): ChatState {
             role: 'user',
             content: action.content,
             timestamp: new Date(),
+            imagePreview: action.imagePreview,
           },
         ],
         showChips: false,
@@ -84,8 +89,10 @@ function reducer(state: ChatState, action: Action): ChatState {
             timestamp: new Date(),
             resolution: action.resolution,
             showOptions: action.showOptions,
+            ticketPdfUrl: action.ticketPdfUrl,
           },
         ],
+        ticketPdfUrl: action.ticketPdfUrl ?? state.ticketPdfUrl,
       };
     case 'SET_PROCESSING':
       return { ...state, isProcessing: action.processing };
@@ -94,7 +101,7 @@ function reducer(state: ChatState, action: Action): ChatState {
     case 'HIDE_CHIPS':
       return { ...state, showChips: false };
     case 'RESET':
-      return { ...initialState, sessionId: crypto.randomUUID() };
+      return { ...initialState, sessionId: crypto.randomUUID(), ticketPdfUrl: null };
     default:
       return state;
   }
@@ -105,6 +112,7 @@ function reducer(state: ChatState, action: Action): ChatState {
 interface ChatContextValue {
   state: ChatState;
   sendMessage: (content: string) => Promise<void>;
+  sendImage: (imageBase64: string) => Promise<void>;
   reset: () => void;
 }
 
@@ -195,10 +203,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           dispatch({ type: 'SET_PROCESSING', processing: false });
 
           if (response.intent === 'confirm') {
+            const pdfUrl = response.resolution?.ticket_pdf_url;
             dispatch({
               type: 'ADD_ASSISTANT_MESSAGE',
               content: "Confirmed! Your new flight has been booked and a virtual card has been authorized. You'll receive a confirmation email shortly.",
               resolution: response.resolution,
+              ticketPdfUrl: pdfUrl ?? undefined,
             });
           } else if (response.intent === 'options') {
             const alts = response.resolution.research_result?.alternatives ?? [];
@@ -241,6 +251,37 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     [state.sessionId, pollForResolution],
   );
 
+  const sendImage = useCallback(
+    async (imageBase64: string) => {
+      dispatch({ type: 'ADD_USER_MESSAGE', content: 'Uploaded boarding pass photo', imagePreview: imageBase64 });
+      dispatch({ type: 'SET_PROCESSING', processing: true });
+      dispatch({ type: 'ADD_ASSISTANT_MESSAGE', content: 'Scanning your boarding pass...' });
+
+      try {
+        const response = await api.sendChatMessage('', state.sessionId, imageBase64);
+
+        if (response.status === 'gathering') {
+          dispatch({ type: 'SET_PROCESSING', processing: false });
+          dispatch({ type: 'ADD_ASSISTANT_MESSAGE', content: response.acknowledgment });
+        } else if (response.status === 'processing' && response.event_id) {
+          dispatch({ type: 'SET_EVENT_ID', eventId: response.event_id });
+          dispatch({ type: 'ADD_ASSISTANT_MESSAGE', content: response.acknowledgment });
+          pollForResolution(response.event_id);
+        } else {
+          dispatch({ type: 'SET_PROCESSING', processing: false });
+          dispatch({ type: 'ADD_ASSISTANT_MESSAGE', content: response.acknowledgment });
+        }
+      } catch {
+        dispatch({ type: 'SET_PROCESSING', processing: false });
+        dispatch({
+          type: 'ADD_ASSISTANT_MESSAGE',
+          content: 'Sorry, I had trouble processing that image. Please try again or type your flight details.',
+        });
+      }
+    },
+    [state.sessionId, pollForResolution],
+  );
+
   const reset = useCallback(() => {
     if (pollingRef.current) clearInterval(pollingRef.current);
     api.resetDemo().catch(() => {});
@@ -248,7 +289,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <ChatContext.Provider value={{ state, sendMessage, reset }}>
+    <ChatContext.Provider value={{ state, sendMessage, sendImage, reset }}>
       {children}
     </ChatContext.Provider>
   );

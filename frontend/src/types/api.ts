@@ -103,6 +103,7 @@ export interface Resolution {
   research_result: ResearchResult | null;
   policy_result: PolicyResult | null;
   comms_result: CommsResult | null;
+  ticket_pdf_url?: string | null;
   created_at: string;
 }
 

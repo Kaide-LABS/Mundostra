@@ -71,7 +71,10 @@ async def client() -> AsyncIterator[AsyncClient]:
 def _clean_state() -> None:
     """Clean state between tests."""
     main_module.engine.resolutions.clear()
+    main_module.engine.events.clear()
+    main_module.engine.ticket_pdfs.clear()
     bus._history.clear()
     main_module.chat_sessions.clear()
     main_module.chat_pending.clear()
     main_module.chat_events.clear()
+    main_module.chat_context.clear()

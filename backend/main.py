@@ -12,6 +12,7 @@ from uuid import UUID, uuid4
 import httpx
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 
 from backend.chat.parser import ChatParser
 from backend.config import get_settings
@@ -136,6 +137,8 @@ async def respond_to_event(event_id: UUID, response: TravelerResponse) -> dict[s
 async def reset_demo() -> dict[str, str]:
     """Reset all state for a fresh demo run."""
     engine.resolutions.clear()
+    engine.events.clear()
+    engine.ticket_pdfs.clear()
     bus._history.clear()
     chat_sessions.clear()
     chat_pending.clear()
@@ -262,6 +265,69 @@ def _fire_orchestration(session_id: str, response: dict[str, object]) -> None:
 async def chat_message(req: ChatRequest) -> dict[str, object]:
     """Parse a chat message and kick off orchestration if needed."""
     session_id = req.session_id or str(uuid4())
+    settings = get_settings()
+
+    # Handle image upload (OCR)
+    if req.image:
+        from backend.ocr.extractor import extract_from_image
+
+        ocr = await extract_from_image(req.image, mock_llm=settings.mock_llm)
+        ocr_resp: dict[str, object] = {
+            "session_id": session_id,
+            "intent": "flight_disruption",
+        }
+
+        if not ocr.success:
+            ocr_resp["acknowledgment"] = (
+                "I couldn't read that image clearly. Could you type your flight details instead?"
+            )
+            ocr_resp["status"] = "gathering"
+            # Start empty gathering context
+            chat_context[session_id] = {
+                "stage": "gathering",
+                "flight_number": None,
+                "origin": None,
+                "destination": None,
+                "disruption_type": "cancelled",
+                "pending_field": "flight_number",
+            }
+            ack = str(ocr_resp["acknowledgment"])
+            ocr_resp["acknowledgment"] = f"{ack} What's your flight number? (e.g., UA 2381)"
+            return ocr_resp
+
+        # Populate gathering context from OCR
+        chat_context[session_id] = {
+            "stage": "gathering",
+            "flight_number": ocr.flight_number,
+            "origin": ocr.origin,
+            "destination": ocr.destination,
+            "disruption_type": "cancelled",
+            "pending_field": None,
+        }
+        ocr_ctx = chat_context[session_id]
+
+        missing = _next_missing_question(ocr_ctx)
+        if missing:
+            next_field, question = missing
+            ocr_ctx["pending_field"] = next_field
+            found = ", ".join(
+                f"**{f}**: {ocr_ctx[f]}"
+                for f in ("flight_number", "origin", "destination")
+                if ocr_ctx.get(f)
+            )
+            ocr_resp["acknowledgment"] = (
+                f"I read your boarding pass and found: {found}. "
+                f"I just need a bit more info. {question}"
+            )
+            ocr_resp["status"] = "gathering"
+        else:
+            ocr_resp["acknowledgment"] = (
+                f"I read your boarding pass — flight **{ocr_ctx['flight_number']}** from "
+                f"**{ocr_ctx['origin']}** to **{ocr_ctx['destination']}**. "
+                f"Let me find alternatives for you right away."
+            )
+            _fire_orchestration(session_id, ocr_resp)
+        return ocr_resp
 
     # If session is in gathering stage, treat message as an answer
     ctx = chat_context.get(session_id)
@@ -378,6 +444,19 @@ async def chat_status(event_id: str) -> dict[str, object]:
 
     # Still processing
     return {"status": "processing", "event_id": event_id}
+
+
+@app.get("/api/tickets/{event_id}/pdf")
+async def download_ticket_pdf(event_id: str) -> Response:
+    """Download the generated ticket PDF for a confirmed booking."""
+    pdf_bytes = engine.ticket_pdfs.get(event_id)
+    if pdf_bytes is None:
+        return Response(content="Ticket not found", status_code=404)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="ticket-{event_id[:8]}.pdf"'},
+    )
 
 
 @app.get("/api/events/{event_id}/trace")

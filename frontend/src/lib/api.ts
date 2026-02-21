@@ -46,10 +46,10 @@ export const api = {
       method: 'POST',
     }),
 
-  sendChatMessage: (message: string, sessionId?: string) =>
+  sendChatMessage: (message: string, sessionId?: string, image?: string) =>
     request<ChatApiResponse>('/api/chat', {
       method: 'POST',
-      body: JSON.stringify({ message, session_id: sessionId }),
+      body: JSON.stringify({ message, session_id: sessionId, ...(image ? { image } : {}) }),
     }),
 
   getChatStatus: (eventId: string) =>
