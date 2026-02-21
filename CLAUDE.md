@@ -172,6 +172,46 @@ Three demo-enhancing changes:
 - Record demo video using the script drafted this session
 - Phase 4 remaining: memo, API docs, cost analysis
 
+## Session Handoff — 2026-02-21 (Session 6)
+
+### What was done
+1. **Boarding Pass Image OCR**: Users can upload a photo of their boarding pass in chat. Gemini Vision extracts flight number, origin, destination, and passenger name via `backend/ocr/extractor.py`. In mock mode returns deterministic data (UA 2381, SFO→JFK, Sarah Chen). If all fields are extracted, orchestration fires immediately — skipping the multi-turn gathering flow.
+2. **Auto-Generated Ticket PDF**: After booking confirmation (CONFIRM + card authorization), a branded single-page landscape PDF is generated via `fpdf2` (`backend/pdf/ticket.py`). Stored in-memory on the engine, served at `GET /api/tickets/{event_id}/pdf`.
+3. **Persistent Download Bar**: After confirmation, a purple "Your ticket is ready / Download PDF" bar sticks above the chat input. Survives scrolling, clears on "New Chat" reset.
+4. **Scanning Animation**: When a user uploads a photo, a "Scanning your boarding pass..." assistant message appears immediately before OCR result returns.
+5. **Updated Welcome Message**: Now reads "...Tell me what happened, or snap a photo of your boarding pass to get started."
+
+### Files created
+- `backend/ocr/__init__.py`, `backend/ocr/extractor.py` — OCR extraction module
+- `backend/pdf/__init__.py`, `backend/pdf/ticket.py` — PDF generation module
+- `backend/tests/test_ocr.py` — 3 OCR tests
+- `backend/tests/test_pdf.py` — 3 PDF tests
+
+### Files modified
+- `backend/main.py` — image handling in `/api/chat`, `GET /api/tickets/{event_id}/pdf`, reset cleanup
+- `backend/models/chat.py` — `image` field on `ChatRequest`
+- `backend/models/resolutions.py` — `ticket_pdf_url` on `Resolution`
+- `backend/orchestrator/engine.py` — `events`/`ticket_pdfs` dicts, PDF generation on confirm
+- `backend/tests/conftest.py` — clears new engine state + `chat_context`
+- `backend/tests/test_chat.py` — 3 new integration tests (OCR upload, PDF 404, PDF download)
+- `pyproject.toml` — added `fpdf2>=2.8.0`
+- `frontend/src/components/chat/ChatInput.tsx` — file input + image button
+- `frontend/src/components/chat/ChatContainer.tsx` — persistent download bar, passes `sendImage`
+- `frontend/src/components/chat/ChatMessageBubble.tsx` — image preview + PDF download button
+- `frontend/src/context/ChatContext.tsx` — `sendImage`, `imagePreview`, `ticketPdfUrl`, scanning message, updated welcome
+- `frontend/src/lib/api.ts` — optional `image` param on `sendChatMessage`
+- `frontend/src/types/api.ts` — `ticket_pdf_url` on `Resolution`
+
+### Current state
+- 90 tests pass (81 existing + 9 new), frontend builds clean
+- All code pushed to GitHub (`Kaide-LABS/Mundostra`)
+- Both OCR and PDF features work in mock mode; OCR real mode uses Gemini Vision via Vertex AI
+
+### Next steps
+- Record demo video
+- Phase 4 remaining: memo, API docs, cost analysis
+- Redeploy to Cloud Run (`git pull && ./deploy.sh` in Cloud Shell)
+
 ## Future Enhancements (Nice-to-Haves)
-- **Ticket Image OCR**: Allow users to upload a photo of their boarding pass/ticket in chat. Use Gemini vision to extract flight number, origin, destination — skipping the text gathering flow.
-- **Auto-Generated Ticket PDF**: After booking is confirmed, automatically generate a downloadable ticket/boarding pass file with the new flight details.
+- **Guided Demo Mode**: "Run Demo" button that auto-plays the Sarah Chen scenario with timed messages — lets you narrate a pitch without typing.
+- **Split-Screen View**: Chat + live agent trace side-by-side in a single page for pitch presentations.
