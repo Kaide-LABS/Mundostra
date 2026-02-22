@@ -212,6 +212,38 @@ Three demo-enhancing changes:
 - Phase 4 remaining: memo, API docs, cost analysis
 - Redeploy to Cloud Run (`git pull && ./deploy.sh` in Cloud Shell)
 
+## Session Handoff — 2026-02-22 (Session 7)
+
+### What was done
+1. **Deploy script fixed for service account**: Updated `deploy.sh` to use `--async` Cloud Build submissions with polling instead of log streaming — the `sentinel-vertexai` service account can't stream logs but can submit builds and poll status.
+2. **Service account IAM setup**: Configured `sentinel-vertexai@gen-lang-client-0754692302.iam.gserviceaccount.com` with Editor role on the project. This enables one-command deploys from local machine via `bash deploy.sh` without needing Cloud Shell.
+3. **Successful Cloud Run redeployment**: Both services redeployed with latest code (including OCR + PDF features from Session 6).
+4. **gcloud SDK updated**: Updated from 550.0.0 to 557.0.0. Note: OAuth browser login is broken (redirect_uri error) — use service account for all gcloud operations.
+5. **Comprehensive demo description & pitch strategy**: Documented full system capabilities and prepared presentation strategy tailored for Vinuta Chopra (CEO) based on CONTEXT.MD profiling.
+
+### Current state
+- 90 tests pass, frontend builds clean
+- Cloud Run services live and updated
+- Deploy works from local machine via service account (no Cloud Shell needed)
+- gcloud config `mundostra` created with service account
+
+### gcloud setup
+- **Config**: `mundostra` (use `gcloud config configurations activate mundostra`)
+- **Account**: `sentinel-vertexai@gen-lang-client-0754692302.iam.gserviceaccount.com`
+- **Role**: Editor on project `gen-lang-client-0754692302`
+- **OAuth login broken**: Don't try `gcloud auth login` — redirect_uri bug in Google's OAuth client. Use the service account for everything.
+
+### Live URLs
+- **Frontend**: https://mundostra-web-pdvcgujcea-uc.a.run.app
+- **Backend**: https://mundostra-api-pdvcgujcea-uc.a.run.app
+- **Health**: https://mundostra-api-pdvcgujcea-uc.a.run.app/health
+
+### Next steps
+- Draft written memo (Amazon 6-pager style) for Vinuta pitch
+- Record demo video following the 3-minute sequence outlined this session
+- Phase 4 remaining: API docs, cost analysis
+- Nice-to-haves: Guided Demo Mode, Split-Screen View
+
 ## Future Enhancements (Nice-to-Haves)
 - **Guided Demo Mode**: "Run Demo" button that auto-plays the Sarah Chen scenario with timed messages — lets you narrate a pitch without typing.
 - **Split-Screen View**: Chat + live agent trace side-by-side in a single page for pitch presentations.
