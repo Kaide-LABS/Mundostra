@@ -20,6 +20,45 @@ else
   exit 1
 fi
 
+# Helper: submit a Cloud Build and wait for it to finish
+submit_and_wait() {
+  local config_file="$1"
+  local label="$2"
+
+  # Submit async and capture build ID
+  BUILD_ID=$(gcloud builds submit \
+    --project="${PROJECT_ID}" \
+    --config="${config_file}" \
+    --async \
+    --format="value(id)" \
+    --quiet 2>&1 | tail -1)
+
+  echo "    Build ID: ${BUILD_ID}"
+  echo "    Logs: https://console.cloud.google.com/cloud-build/builds/${BUILD_ID}?project=${PROJECT_ID}"
+  echo "    Waiting for ${label} build to complete..."
+
+  # Poll until build finishes
+  while true; do
+    STATUS=$(gcloud builds describe "${BUILD_ID}" \
+      --project="${PROJECT_ID}" \
+      --format="value(status)" 2>/dev/null || echo "UNKNOWN")
+
+    case "${STATUS}" in
+      SUCCESS)
+        echo "    ✓ ${label} build succeeded."
+        return 0
+        ;;
+      FAILURE|INTERNAL_ERROR|TIMEOUT|CANCELLED|EXPIRED)
+        echo "    ✗ ${label} build failed with status: ${STATUS}"
+        exit 1
+        ;;
+      *)
+        sleep 10
+        ;;
+    esac
+  done
+}
+
 echo "=== Deploying Mundostra to Cloud Run ==="
 echo "Project: ${PROJECT_ID}"
 echo "Region:  ${REGION}"
@@ -33,10 +72,7 @@ steps:
     args: ['build', '-f', 'Dockerfile.backend', '-t', '${BACKEND_IMAGE}', '.']
 images: ['${BACKEND_IMAGE}']
 CBEOF
-gcloud builds submit \
-  --project="${PROJECT_ID}" \
-  --config=/tmp/cloudbuild-backend.yaml \
-  --quiet
+submit_and_wait /tmp/cloudbuild-backend.yaml "Backend"
 
 # --- Step 2: Deploy backend to Cloud Run ---
 echo ">>> Deploying backend service..."
@@ -90,10 +126,7 @@ steps:
     args: ['build', '-f', 'Dockerfile.frontend', '--build-arg', 'NEXT_PUBLIC_API_URL=${BACKEND_URL}', '--build-arg', 'NEXT_PUBLIC_WS_URL=${WS_URL}', '-t', '${FRONTEND_IMAGE}', '.']
 images: ['${FRONTEND_IMAGE}']
 CBEOF
-gcloud builds submit \
-  --project="${PROJECT_ID}" \
-  --config=/tmp/cloudbuild-frontend.yaml \
-  --quiet
+submit_and_wait /tmp/cloudbuild-frontend.yaml "Frontend"
 
 # --- Step 5: Deploy frontend to Cloud Run ---
 echo ">>> Deploying frontend service..."
