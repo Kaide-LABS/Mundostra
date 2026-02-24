@@ -244,6 +244,33 @@ Three demo-enhancing changes:
 - Phase 4 remaining: API docs, cost analysis
 - Nice-to-haves: Guided Demo Mode, Split-Screen View
 
+## Session Handoff — 2026-02-24 (Session 8)
+
+### What was done
+1. **Eliminated Cloud Run cold starts**: Set `min-instances=1` on both `mundostra-api` and `mundostra-web` via `gcloud run services update`. Updated `deploy.sh` to persist this setting (lines 88 and 143: `--min-instances=0` → `--min-instances=1`).
+2. **Diagnosed cold start pattern from logs**: Reviewed Cloud Run logs showing 3 sessions with startup events (Feb 22 14:40, 17:30; Feb 24 13:28) — each was a cold boot after idle shutdown. The backend Python container boot (~5s) was causing first-request latency and occasional failures.
+3. **Verified configuration**: Both services confirmed with `minScale=1`, `maxScale=3`, `startup-cpu-boost=true`.
+
+### Files modified
+- `deploy.sh` — `--min-instances=0` → `--min-instances=1` for both backend and frontend deploy commands
+
+### Current state
+- 90 tests pass, frontend builds clean
+- Both Cloud Run services always-on (no more cold starts)
+- All code pushed to GitHub
+- Estimated cost increase: ~$0.50–$1.50/day per idle instance
+
+### Live URLs
+- **Frontend**: https://mundostra-web-8822384086.us-central1.run.app
+- **Backend**: https://mundostra-api-8822384086.us-central1.run.app
+- **Health**: https://mundostra-api-8822384086.us-central1.run.app/health
+
+### Next steps
+- Draft written memo (Amazon 6-pager style) for Vinuta pitch
+- Record demo video following the 3-minute sequence outlined in Session 7
+- Phase 4 remaining: API docs, cost analysis
+- Nice-to-haves: Guided Demo Mode, Split-Screen View
+
 ## Future Enhancements (Nice-to-Haves)
 - **Guided Demo Mode**: "Run Demo" button that auto-plays the Sarah Chen scenario with timed messages — lets you narrate a pitch without typing.
 - **Split-Screen View**: Chat + live agent trace side-by-side in a single page for pitch presentations.
