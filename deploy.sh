@@ -85,7 +85,7 @@ gcloud run deploy "${BACKEND_SERVICE}" \
   --port=8000 \
   --memory=1Gi \
   --cpu=1 \
-  --min-instances=0 \
+  --min-instances=1 \
   --max-instances=3 \
   --timeout=300 \
   --set-env-vars="APP_ENV=production" \
@@ -139,7 +139,7 @@ gcloud run deploy "${FRONTEND_SERVICE}" \
   --port=3000 \
   --memory=512Mi \
   --cpu=1 \
-  --min-instances=0 \
+  --min-instances=1 \
   --max-instances=3 \
   --quiet
 
